@@ -33,27 +33,27 @@ export default function TabBar({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    height: "var(--space-xl)",
-    padding: `0 var(--space-sm)`,
-    background: "var(--figma-surface)",
-    borderBottom: "1px solid var(--figma-border)",
+    height: "var(--spacing-8)",
+    padding: `0 var(--spacing-2)`,
+    background: "hsl(var(--color-secondary))",
+    borderBottom: "1px solid hsl(var(--color-border))",
   };
 
   const tabsWrapperStyle: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
-    gap: "var(--space-xs)",
+    gap: "var(--spacing-1)",
     overflow: "hidden",
   };
 
   const tabStyle: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
-    height: "var(--space-lg)",
-    padding: `0 var(--space-sm)`,
+    height: "var(--spacing-6)",
+    padding: `0 var(--spacing-2)`,
     cursor: "pointer",
     userSelect: "none",
-    fontSize: "var(--fs-sm)",
+    fontSize: "var(--text-sm)",
   };
 
   const addTab = () => {
@@ -80,11 +80,11 @@ export default function TabBar({
               style={{
                 ...tabStyle,
                 color: isActive
-                  ? "var(--figma-text)"
-                  : "var(--figma-text-secondary)",
-                background: isActive ? "var(--figma-bg)" : "transparent",
+                  ? "hsl(var(--color-foreground))"
+                  : "hsl(var(--color-muted-foreground))",
+                background: isActive ? "hsl(var(--color-background))" : "transparent",
                 borderBottom: `2px solid ${
-                  isActive ? "var(--figma-accent)" : "transparent"
+                  isActive ? "hsl(var(--color-accent))" : "transparent"
                 }`,
               }}
             >
@@ -99,9 +99,9 @@ export default function TabBar({
                 {tab.breadcrumb && (
                   <span
                     style={{
-                      marginLeft: "var(--space-xs)",
-                      fontSize: "var(--fs-xs)",
-                      color: "var(--figma-text-secondary)",
+                      marginLeft: "var(--spacing-1)",
+                      fontSize: "var(--text-xs)",
+                      color: "hsl(var(--color-muted-foreground))",
                     }}
                   >
                     /{tab.breadcrumb.join("/")}
@@ -114,8 +114,8 @@ export default function TabBar({
                   closeTab(tab.id);
                 }}
                 style={{
-                  marginLeft: "var(--space-sm)",
-                  color: "var(--figma-text-secondary)",
+                  marginLeft: "var(--spacing-2)",
+                  color: "hsl(var(--color-muted-foreground))",
                   background: "transparent",
                   border: "none",
                   cursor: "pointer",
@@ -130,13 +130,13 @@ export default function TabBar({
           onClick={addTab}
           title="New file"
           style={{
-            marginLeft: "var(--space-xs)",
-            width: "var(--space-lg)",
-            height: "var(--space-lg)",
+            marginLeft: "var(--spacing-1)",
+            width: "var(--spacing-6)",
+            height: "var(--spacing-6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "var(--figma-text-secondary)",
+            color: "hsl(var(--color-muted-foreground))",
             background: "transparent",
             border: "none",
             cursor: "pointer",
@@ -149,7 +149,7 @@ export default function TabBar({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "var(--space-xs)",
+          gap: "var(--spacing-1)",
         }}
       >
         {avatars.map((a) => (

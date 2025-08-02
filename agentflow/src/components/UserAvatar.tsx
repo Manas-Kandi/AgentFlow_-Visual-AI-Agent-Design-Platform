@@ -14,12 +14,12 @@ export default function UserAvatar({ name, image, online }: UserAvatarProps) {
       {image ? (
         <Image src={image} alt={name} fill className="rounded-full object-cover" />
       ) : (
-        <div className="w-full h-full rounded-full bg-[var(--figma-border)] flex items-center justify-center text-xs text-[var(--figma-text)]">
+        <div className="w-full h-full rounded-full bg-[hsl(var(--color-border))] flex items-center justify-center text-xs text-[hsl(var(--color-foreground))]">
           {name.charAt(0).toUpperCase()}
         </div>
       )}
       {online && (
-        <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-[var(--figma-bg)]" />
+        <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-[hsl(var(--color-background))]" />
       )}
     </div>
   );

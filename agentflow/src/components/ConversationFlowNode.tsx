@@ -167,7 +167,7 @@ export default function ConversationFlowNode({
     top: node.position.y,
     width: 400,
     minHeight: 300,
-    borderColor: isSelected ? 'var(--figma-accent)' : 'var(--figma-border)',
+    borderColor: isSelected ? 'hsl(var(--color-accent))' : 'hsl(var(--color-border))',
     zIndex: isSelected ? 10 : 5,
     fontFamily: 'Inter, Menlo, monospace',
     ...(isHovered ? hoverNodeStyle : {}),

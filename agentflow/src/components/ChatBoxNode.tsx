@@ -76,7 +76,7 @@ export default function ChatBoxNode(props: ChatBoxNodeProps) {
     top: node.position.y,
     width: node.size.width,
     height: node.size.height,
-    borderColor: isSelected ? 'var(--figma-accent)' : 'var(--figma-border)',
+    borderColor: isSelected ? 'hsl(var(--color-accent))' : 'hsl(var(--color-border))',
     ...(isHovered ? hoverNodeStyle : {}),
     ...(isSelected ? selectedNodeStyle : {}),
     zIndex: 3
