@@ -6,6 +6,39 @@ import { nodeCategories } from '@/data/nodeDefinitions';
 import { theme as colors } from '@/data/theme';
 import { NodeType, NodeCategory } from '@/types';
 
+const SIDEBAR_WIDTH = "16rem";
+
+const sidebarStyle: React.CSSProperties = {
+  width: SIDEBAR_WIDTH,
+  minWidth: SIDEBAR_WIDTH,
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  backgroundColor: colors.sidebar,
+  borderRight: `1px solid ${colors.border}`,
+  color: colors.text,
+  fontFamily: "var(--font-code)",
+  fontSize: "var(--fs-xs)",
+};
+
+const sidebarTabStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "var(--space-sm)",
+  textAlign: "center",
+  fontFamily: "var(--font-ui)",
+  fontSize: "var(--fs-xs)",
+  fontWeight: 600,
+  color: colors.textMute,
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+};
+
+const activeTabStyle: React.CSSProperties = {
+  color: colors.text,
+  boxShadow: `inset 0 -2px 0 ${colors.accent}`,
+};
+
 interface ComponentLibraryProps {
   onAddNode: (nodeType: NodeType) => void;
   onBackToProjects: () => void;
@@ -15,7 +48,15 @@ export function ComponentLibrary({ onAddNode, onBackToProjects }: ComponentLibra
   // Dynamically create expandedSections based on nodeCategories
   const initialSections: Record<string, boolean> = Object.fromEntries(nodeCategories.map((cat: NodeCategory) => [cat.id, true]));
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(initialSections);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
+  const tabs = [
+    { id: 'layers', label: 'Layers' },
+    { id: 'assets', label: 'Assets' },
+    { id: 'pages', label: 'Pages' },
+  ] as const;
+
+  type TabId = typeof tabs[number]['id'];
+  const [activeTab, setActiveTab] = useState<TabId>('assets');
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -34,63 +75,187 @@ export function ComponentLibrary({ onAddNode, onBackToProjects }: ComponentLibra
   })).filter((category: NodeCategory) => category.nodes.length > 0);
 
   return (
-    <aside
-      className="bg-[#18181b] border-r border-[#23232a] rounded font-mono w-64 flex flex-col"
-      style={{ minWidth: 220, maxWidth: 280, height: '100%', boxShadow: 'none', padding: 0, display: 'flex' }}
-    >
-      {/* Header - minimalist, flat, professional */}
-      <div className="h-12 border-b flex items-center px-4" style={{ borderColor: '#23232a' }}>
+    <aside style={sidebarStyle}>
+      {/* Header */}
+      <div
+        style={{
+          height: "3rem",
+          borderBottom: `1px solid ${colors.border}`,
+          display: "flex",
+          alignItems: "center",
+          padding: "0 var(--space-md)",
+        }}
+      >
         <button
           onClick={onBackToProjects}
-          className="flex items-center gap-2 px-2 py-1 hover:bg-blue-600/20 transition-colors border-0 rounded focus:outline-none"
-          style={{ borderRadius: 4, background: 'none', boxShadow: 'none' }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-sm)",
+            padding: "var(--space-xs) var(--space-sm)",
+            background: "none",
+            border: "none",
+            borderRadius: 4,
+            cursor: "pointer",
+          }}
         >
-          <div className="w-6 h-6 rounded flex items-center justify-center bg-blue-600">
-            <Bot className="w-4 h-4 text-white" />
+          <div
+            style={{
+              width: "1.5rem",
+              height: "1.5rem",
+              borderRadius: 4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.accent,
+            }}
+          >
+            <Bot style={{ width: "1rem", height: "1rem", color: "#fff" }} />
           </div>
-          <span className="text-xs font-semibold text-white tracking-wide">AgentFlow</span>
+          <span
+            style={{
+              fontSize: "var(--fs-xs)",
+              fontWeight: 600,
+              color: colors.text,
+              letterSpacing: "0.05em",
+            }}
+          >
+            AgentFlow
+          </span>
         </button>
       </div>
-      {/* Node Library - minimalist explorer */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-white">Components</span>
-        </div>
-        <div className="space-y-3">
-          {filteredCategories.map(category => (
-            <div key={category.id}>
-              <button
-                onClick={() => toggleSection(category.id)}
-                className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-600/20 text-left transition-colors border-0 rounded focus:outline-none"
-                style={{ borderRadius: 4, background: 'none', boxShadow: 'none' }}
-              >
-                {expandedSections[category.id] ?
-                  <ChevronDown className="w-4 h-4 text-blue-400" /> :
-                  <ChevronRight className="w-4 h-4 text-blue-400" />
-                }
-                <span className="text-xs font-semibold text-white">{category.name}</span>
-              </button>
-              {expandedSections[category.id] && (
-                <div className="ml-4 space-y-2">
-                  {category.nodes.map(node => (
-                    <div
-                      key={node.id}
-                      className="flex items-center gap-3 px-2 py-2 cursor-pointer transition-colors border-0 rounded focus:outline-none"
-                      style={{ borderRadius: 4, background: 'none', boxShadow: 'none' }}
-                      onClick={() => onAddNode(node)}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#3b82f61A')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                    >
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: node.color }} />
-                      {React.createElement(node.icon, { className: "w-4 h-4 text-gray-400" })}
-                      <span className="text-xs font-mono text-white">{node.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${colors.border}` }}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              ...sidebarTabStyle,
+              ...(activeTab === tab.id ? activeTabStyle : {}),
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflow: "auto", padding: "var(--space-md)" }}>
+        {activeTab === "assets" && (
+          <>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "var(--space-sm)",
+              }}
+            >
+              <span style={{ fontSize: "var(--fs-xs)", fontWeight: 600 }}>
+                Components
+              </span>
             </div>
-          ))}
-        </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              {filteredCategories.map((category) => (
+                <div key={category.id}>
+                  <button
+                    onClick={() => toggleSection(category.id)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "var(--space-sm)",
+                      padding: "var(--space-xs) var(--space-sm)",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      borderRadius: 4,
+                      color: colors.text,
+                      cursor: "pointer",
+                      fontSize: "var(--fs-xs)",
+                      fontFamily: "var(--font-ui)",
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = `${colors.accent}1A`)}
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "none")}
+                  >
+                    {expandedSections[category.id] ? (
+                      <ChevronDown
+                        style={{ width: 16, height: 16, color: colors.accent }}
+                      />
+                    ) : (
+                      <ChevronRight
+                        style={{ width: 16, height: 16, color: colors.accent }}
+                      />
+                    )}
+                    <span>{category.name}</span>
+                  </button>
+                  {expandedSections[category.id] && (
+                    <div
+                      style={{
+                        marginLeft: "var(--space-md)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "var(--space-xs)",
+                      }}
+                    >
+                      {category.nodes.map((node) => (
+                        <div
+                          key={node.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-sm)",
+                            padding: "var(--space-xs) var(--space-sm)",
+                            borderRadius: 4,
+                            cursor: "pointer",
+                            fontSize: "var(--fs-xs)",
+                            fontFamily: "var(--font-code)",
+                            color: colors.text,
+                          }}
+                          onClick={() => onAddNode(node)}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background = `${colors.accent}1A`)}
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = "none")}
+                        >
+                          <div
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 4,
+                              backgroundColor: node.color,
+                            }}
+                          />
+                          {React.createElement(node.icon, {
+                            style: {
+                              width: 16,
+                              height: 16,
+                              color: colors.textMute,
+                            },
+                          })}
+                          <span>{node.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === "layers" && (
+          <div style={{ color: colors.textMute }}>Layers panel coming soon</div>
+        )}
+
+        {activeTab === "pages" && (
+          <div style={{ color: colors.textMute }}>Pages panel coming soon</div>
+        )}
       </div>
     </aside>
   );
