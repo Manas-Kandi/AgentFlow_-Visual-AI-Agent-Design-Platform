@@ -29,7 +29,6 @@ import ConversationFlowPropertiesPanel from "./propertiesPanels/ConversationFlow
 import SimulatorPropertiesPanel from "./propertiesPanels/SimulatorPropertiesPanel";
 import DashboardPropertiesPanel from "./propertiesPanels/DashboardPropertiesPanel";
 import ChatInterfacePropertiesPanel from "./propertiesPanels/ChatInterfacePropertiesPanel";
-import TestCasePropertiesPanel from "./propertiesPanels/TestCasePropertiesPanel";
 
 interface PropertiesPanelProps {
   selectedNode: CanvasNode | null;
@@ -46,12 +45,15 @@ export default function CompactPropertiesPanel({
   selectedNode,
   onChange,
 }: PropertiesPanelProps) {
+  // Height of the global top bar to offset the panel
+  const TOP_BAR_HEIGHT = 64;
+
   // Panel container style - fixed width, no horizontal scroll
   const panelStyle: React.CSSProperties = {
     width: "280px",
     minWidth: "260px",
     maxWidth: "300px",
-    height: "100%",
+    height: `calc(100% - ${TOP_BAR_HEIGHT}px)`,
     minHeight: 0,
     display: "flex",
     flexDirection: "column",
@@ -65,7 +67,7 @@ export default function CompactPropertiesPanel({
     color: "#cccccc",
     position: "fixed", // Make it feel truly fixed
     right: 0,
-    top: 0,
+    top: `${TOP_BAR_HEIGHT}px`,
     zIndex: 100,
     boxSizing: "border-box",
   };
