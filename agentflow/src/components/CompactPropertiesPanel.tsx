@@ -29,7 +29,6 @@ import ConversationFlowPropertiesPanel from "./propertiesPanels/ConversationFlow
 import SimulatorPropertiesPanel from "./propertiesPanels/SimulatorPropertiesPanel";
 import DashboardPropertiesPanel from "./propertiesPanels/DashboardPropertiesPanel";
 import ChatInterfacePropertiesPanel from "./propertiesPanels/ChatInterfacePropertiesPanel";
-import TestCasePropertiesPanel from "./propertiesPanels/TestCasePropertiesPanel";
 
 interface PropertiesPanelProps {
   selectedNode: CanvasNode | null;
@@ -40,12 +39,15 @@ export default function CompactPropertiesPanel({
   selectedNode,
   onChange,
 }: PropertiesPanelProps) {
+  // Height of the global top bar to offset the panel
+  const TOP_BAR_HEIGHT = 64;
+
   // Panel container style - fixed width, no horizontal scroll, theme-driven
   const panelStyle: React.CSSProperties = {
     width: theme.components.panel.width,
     minWidth: theme.components.panel.minWidth,
     maxWidth: theme.components.panel.maxWidth,
-    height: "100%",
+    height: `calc(100% - ${TOP_BAR_HEIGHT}px)`,
     minHeight: 0,
     display: "flex",
     flexDirection: "column",
@@ -59,7 +61,7 @@ export default function CompactPropertiesPanel({
     color: theme.colors.textPrimary,
     position: "fixed",
     right: 0,
-    top: 0,
+    top: `${TOP_BAR_HEIGHT}px`,
     zIndex: 100,
     boxSizing: "border-box",
   };
@@ -299,17 +301,17 @@ export default function CompactPropertiesPanel({
               Panel Not Available
             </h4>
           </div>
-          <p
-            style={{
-              fontSize: theme.typography.fontSize.xs,
-              color: theme.colors.textMuted,
-              margin: 0,
-              lineHeight: 1.4,
-            }}
-          >
-            Properties panel for this node type hasn't been implemented yet. The
-            node will still work in workflows.
-          </p>
+            <p
+              style={{
+                fontSize: theme.typography.fontSize.xs,
+                color: theme.colors.textMuted,
+                margin: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              Properties panel for this node type hasn&apos;t been implemented yet. The
+              node will still work in workflows.
+            </p>
         </div>
       </div>
     </div>
@@ -319,11 +321,13 @@ export default function CompactPropertiesPanel({
   const renderNodePanel = () => {
     const nodeType = selectedNode.subtype || selectedNode.type;
     // Wrap existing panels with compact styling
-    const wrapPanel = (PanelComponent: React.ComponentType<any>) => (
-      <div style={panelStyle}>
-        <PanelComponent node={selectedNode} onChange={onChange} />
-      </div>
-    );
+      const wrapPanel = (
+        PanelComponent: React.ComponentType<Record<string, unknown>>
+      ) => (
+        <div style={panelStyle}>
+          <PanelComponent node={selectedNode} onChange={onChange} />
+        </div>
+      );
     switch (nodeType) {
       case "agent":
       case "generic":
