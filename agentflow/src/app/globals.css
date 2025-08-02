@@ -270,3 +270,33 @@
   }
 }
 
+/* Figma-inspired scrollbar styling */
+.figma-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--color-muted-foreground)) transparent;
+}
+
+.figma-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.figma-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.figma-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--color-muted-foreground));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.figma-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--color-foreground));
+}
+
+.figma-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+

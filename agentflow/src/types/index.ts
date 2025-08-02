@@ -71,12 +71,6 @@ export interface SimulatorNodeData {
   expectedOutput?: string;
 }
 
-export interface DashboardNodeData {
-  widgets: string[];
-  title: string;
-  layout: string;
-}
-
 export interface ConditionGroup {
   id: string;
   operator: "AND" | "OR";
