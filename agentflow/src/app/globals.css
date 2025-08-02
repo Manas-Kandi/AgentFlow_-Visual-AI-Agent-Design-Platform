@@ -62,3 +62,25 @@
   border-radius: 3px;
 }
 
+/* Figma interaction utilities */
+@layer utilities {
+  .figma-transition {
+    @apply transition-all duration-200 ease-out;
+  }
+  .figma-transition-fast {
+    @apply transition-all duration-100 ease-out;
+  }
+  .figma-transition-slow {
+    @apply transition-all duration-300 ease-out;
+  }
+  .figma-hover-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .figma-hover-scale {
+    @apply hover:scale-[1.02];
+  }
+  .figma-focus-ring {
+    @apply focus-visible:outline-none focus-visible:border-[var(--figma-accent)] focus-visible:ring-2 focus-visible:ring-[var(--figma-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--figma-bg)];
+  }
+}
+

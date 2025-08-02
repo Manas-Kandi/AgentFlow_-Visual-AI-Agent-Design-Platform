@@ -10,7 +10,7 @@ interface UserAvatarProps {
 
 export default function UserAvatar({ name, image, online }: UserAvatarProps) {
   return (
-    <div className="relative w-6 h-6" title={name}>
+    <div className="relative w-6 h-6 figma-transition-fast figma-hover-scale" title={name}>
       {image ? (
         <Image src={image} alt={name} fill className="rounded-full object-cover" />
       ) : (

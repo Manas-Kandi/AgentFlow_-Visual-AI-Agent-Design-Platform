@@ -48,7 +48,7 @@ export default function TabBar({
           <div
             key={tab.id}
             onClick={() => setActiveId(tab.id)}
-            className={`group flex items-center h-6 px-2 rounded-t-md cursor-pointer select-none text-sm ${
+            className={`group flex items-center h-6 px-2 rounded-t-md cursor-pointer select-none text-sm figma-transition-slow ${
               activeId === tab.id
                 ? "bg-[var(--figma-bg)] text-[var(--figma-text)]"
                 : "text-[var(--figma-text-secondary)]"
@@ -67,7 +67,7 @@ export default function TabBar({
                 e.stopPropagation();
                 closeTab(tab.id);
               }}
-              className="ml-2 opacity-0 group-hover:opacity-100 hover:text-[var(--figma-text)]"
+              className="ml-2 opacity-0 group-hover:opacity-100 hover:text-[var(--figma-text)] figma-transition-fast figma-focus-ring"
             >
               <X className="w-3 h-3" />
             </button>
@@ -75,7 +75,7 @@ export default function TabBar({
         ))}
         <button
           onClick={addTab}
-          className="ml-1 w-6 h-6 flex items-center justify-center text-[var(--figma-text-secondary)] hover:text-[var(--figma-text)]"
+          className="ml-1 w-6 h-6 flex items-center justify-center text-[var(--figma-text-secondary)] hover:text-[var(--figma-text)] figma-transition-fast figma-hover-scale figma-focus-ring"
           title="New file"
         >
           <Plus className="w-4 h-4" />
