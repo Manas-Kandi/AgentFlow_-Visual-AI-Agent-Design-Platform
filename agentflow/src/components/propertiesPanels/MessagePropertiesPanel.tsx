@@ -175,7 +175,9 @@ export default function MessagePropertiesPanel({
           value={safeData.content}
           maxLength={500}
           placeholder="Message to send..."
-          onChange={(e) => handleFieldChange("content", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleFieldChange("content", e.target.value)
+          }
           onBlur={() => setTouched((t) => ({ ...t, content: true }))}
         />
         <span
@@ -246,7 +248,9 @@ export default function MessagePropertiesPanel({
           <input
             type="checkbox"
             checked={!!safeData.passThrough}
-            onChange={(e) => handleFieldChange("passThrough", e.target.checked)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              handleFieldChange("passThrough", e.target.checked)
+            }
             id="passThrough"
             style={{
               accentColor: theme.colors.info,

@@ -63,6 +63,8 @@ export default function IfElsePropertiesPanel({
         history: [],
         state: {},
       };
+  const [contextError, setContextError] = React.useState<string | null>(null);
+  const [stateError, setStateError] = React.useState<string | null>(null);
 
   return (
     <div
@@ -290,10 +292,13 @@ export default function IfElsePropertiesPanel({
           </label>
           <textarea
             value={JSON.stringify(ifElseData.context ?? {}, null, 2)}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
               try {
                 handleFieldChange("context", JSON.parse(e.target.value));
-              } catch {}
+                setContextError(null);
+              } catch {
+                setContextError("Invalid JSON");
+              }
             }}
             placeholder='{"flowId": "...", "metadata": {}}'
             rows={4}
@@ -320,6 +325,18 @@ export default function IfElsePropertiesPanel({
               e.target.style.border = "1px solid #2a2a2a";
             }}
           />
+          {contextError && (
+            <div
+              style={{
+                fontSize: "10px",
+                color: "#f87171",
+                marginTop: "4px",
+                lineHeight: 1.4,
+              }}
+            >
+              {contextError}
+            </div>
+          )}
           <div
             style={{
               fontSize: "10px",
@@ -405,10 +422,13 @@ export default function IfElsePropertiesPanel({
           </label>
           <textarea
             value={JSON.stringify(ifElseData.state ?? {}, null, 2)}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
               try {
                 handleFieldChange("state", JSON.parse(e.target.value));
-              } catch {}
+                setStateError(null);
+              } catch {
+                setStateError("Invalid JSON");
+              }
             }}
             placeholder={`{
   "key": "value"
@@ -437,6 +457,18 @@ export default function IfElsePropertiesPanel({
               e.target.style.border = "1px solid #2a2a2a";
             }}
           />
+          {stateError && (
+            <div
+              style={{
+                fontSize: "10px",
+                color: "#f87171",
+                marginTop: "4px",
+                lineHeight: 1.4,
+              }}
+            >
+              {stateError}
+            </div>
+          )}
           <div
             style={{
               fontSize: "10px",

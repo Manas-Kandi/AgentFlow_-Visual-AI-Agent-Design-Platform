@@ -44,7 +44,7 @@ const TransitionInput: React.FC<TransitionInputProps> = ({
     >
       <VSCodeInput
         value={tr.from || ""}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const next = [...transitions];
           next[idx] = { ...next[idx], from: e.target.value };
           setTransitions(next);
@@ -55,7 +55,7 @@ const TransitionInput: React.FC<TransitionInputProps> = ({
       />
       <VSCodeInput
         value={tr.to || ""}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const next = [...transitions];
           next[idx] = { ...next[idx], to: e.target.value };
           setTransitions(next);
@@ -66,7 +66,7 @@ const TransitionInput: React.FC<TransitionInputProps> = ({
       />
       <VSCodeInput
         value={tr.condition || ""}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const next = [...transitions];
           next[idx] = { ...next[idx], condition: e.target.value };
           setTransitions(next);
@@ -105,6 +105,7 @@ export default function ConversationFlowPropertiesPanel({
   const [transitions, setTransitions] = useState<
     { from: string; to: string; condition: string }[]
   >(() => node.data?.transitions || []);
+  const [statesError, setStatesError] = useState<string | null>(null);
 
   const handleFieldChange = (field: string, value: unknown) => {
     onChange({ ...node, data: { ...node.data, [field]: value } });
@@ -128,16 +129,32 @@ export default function ConversationFlowPropertiesPanel({
       >
         <VSCodeInput
           value={states.join(", ")}
-          onChange={(e) => {
-            const arr = e.target.value
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean);
-            setStates(arr);
-            handleFieldChange("states", arr);
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            try {
+              const arr = e.target.value
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              setStates(arr);
+              handleFieldChange("states", arr);
+              setStatesError(null);
+            } catch {
+              setStatesError("Invalid state list");
+            }
           }}
           placeholder="Comma separated states"
         />
+        {statesError && (
+          <div
+            style={{
+              color: theme.colors.error,
+              fontSize: theme.typography.fontSize.xs,
+              marginTop: theme.spacing.xs,
+            }}
+          >
+            {statesError}
+          </div>
+        )}
       </PanelSection>
       <PanelSection
         title="Initial State"
@@ -145,7 +162,7 @@ export default function ConversationFlowPropertiesPanel({
       >
         <VSCodeInput
           value={initialState}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setInitialState(e.target.value);
             handleFieldChange("initialState", e.target.value);
           }}
@@ -204,7 +221,7 @@ export default function ConversationFlowPropertiesPanel({
           <input
             type="checkbox"
             checked={persistState}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setPersistState(e.target.checked);
               handleFieldChange("persistState", e.target.checked);
             }}
