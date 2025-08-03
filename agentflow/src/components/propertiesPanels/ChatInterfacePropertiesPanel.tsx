@@ -1,7 +1,11 @@
 // All UI rules for properties panels must come from propertiesPanelTheme.ts
 import React, { useState } from "react";
 import { figmaPropertiesTheme as theme } from "./propertiesPanelTheme";
-import { CanvasNode } from "@/types";
+import {
+  CanvasNode,
+  ChatNodeData as BaseChatNodeData,
+} from "@/types";
+import { isChatNodeData } from "@/utils/typeGuards";
 import { PanelSection } from "./PanelSection";
 import { VSCodeInput } from "./vsCodeFormComponents";
 
@@ -10,41 +14,47 @@ interface ChatInterfacePropertiesPanelProps {
   onChange: (node: CanvasNode) => void;
 }
 
+type ChatNodeData = BaseChatNodeData & {
+  placeholder?: string;
+  enableFileUpload?: boolean;
+  showHistory?: boolean;
+};
+
 export default function ChatInterfacePropertiesPanel({
   node,
   onChange,
 }: ChatInterfacePropertiesPanelProps) {
-  interface ChatNodeData {
-    title?: string;
-    placeholder?: string;
-    enableFileUpload?: boolean;
-    showHistory?: boolean;
-    [key: string]: unknown;
-  }
+  const defaultData: ChatNodeData = {
+    title: "",
+    description: "",
+    color: "",
+    icon: "",
+    messages: [],
+    placeholder: "",
+    enableFileUpload: false,
+    showHistory: false,
+  };
+  const data: ChatNodeData = isChatNodeData(node.data)
+    ? { ...defaultData, ...(node.data as ChatNodeData) }
+    : defaultData;
 
-  const data = node.data as ChatNodeData | undefined;
-
-  const [title, setTitle] = useState<string>(() =>
-    data && typeof data.title === "string" ? data.title : ""
+  const [title, setTitle] = useState<string>(data.title ?? "");
+  const [placeholder, setPlaceholder] = useState<string>(
+    data.placeholder ?? ""
   );
-  const [placeholder, setPlaceholder] = useState<string>(() =>
-    data && typeof data.placeholder === "string" ? data.placeholder : ""
+  const [enableFileUpload, setEnableFileUpload] = useState<boolean>(
+    data.enableFileUpload ?? false
   );
-  const [enableFileUpload, setEnableFileUpload] = useState<boolean>(() =>
-    data && typeof data.enableFileUpload === "boolean"
-      ? data.enableFileUpload
-      : false
-  );
-  const [showHistory, setShowHistory] = useState<boolean>(() =>
-    data && typeof data.showHistory === "boolean" ? data.showHistory : false
+  const [showHistory, setShowHistory] = useState<boolean>(
+    data.showHistory ?? false
   );
 
   // Only update known fields, preserve extra fields
   const handleFieldChange = (field: keyof ChatNodeData, value: unknown) => {
-    const updatedData = {
-      ...node.data,
-      [field]: value,
-    };
+    const current: ChatNodeData = isChatNodeData(node.data)
+      ? (node.data as ChatNodeData)
+      : defaultData;
+    const updatedData = { ...current, [field]: value };
     onChange({ ...node, data: updatedData });
   };
 

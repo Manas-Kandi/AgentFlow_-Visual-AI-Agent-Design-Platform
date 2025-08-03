@@ -10,7 +10,10 @@ import type {
   ConversationFlowNodeData,
   SimulatorNodeData,
   DashboardNodeData,
-  ChatNodeData
+  ChatNodeData,
+  AgentNodeData,
+  ToolAgentNodeData,
+  ComplexIfElseNodeData
 } from "@/types";
 
 export function isMessageNodeData(data: unknown): data is MessageNodeData {
@@ -108,5 +111,35 @@ export function isChatNodeData(data: unknown): data is ChatNodeData {
     typeof data === "object" &&
     data !== null &&
     ("messages" in data && Array.isArray((data as Record<string, unknown>).messages))
+  );
+}
+
+export function isAgentNodeData(data: unknown): data is AgentNodeData {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    ("model" in (data as Record<string, unknown>) ||
+      "systemPrompt" in (data as Record<string, unknown>) ||
+      "title" in (data as Record<string, unknown>))
+  );
+}
+
+export function isToolAgentNodeData(
+  data: unknown
+): data is ToolAgentNodeData {
+  return (
+    isAgentNodeData(data) &&
+    typeof (data as Record<string, unknown>).toolConfig === "object"
+  );
+}
+
+export function isComplexIfElseNodeData(
+  data: unknown
+): data is ComplexIfElseNodeData {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    Array.isArray((data as Record<string, unknown>).conditionGroups) &&
+    typeof (data as Record<string, unknown>).globalOperator === "string"
   );
 }

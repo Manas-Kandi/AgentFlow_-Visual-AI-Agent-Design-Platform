@@ -10,7 +10,8 @@ import {
   Info,
   MessageSquare,
 } from "lucide-react";
-import { CanvasNode } from "@/types";
+import { CanvasNode, AgentNodeData as BaseAgentNodeData } from "@/types";
+import { isAgentNodeData } from "@/utils/typeGuards";
 import {
   figmaPropertiesTheme as theme,
   getPanelContainerStyle,
@@ -22,34 +23,37 @@ import {
   VSCodeButton,
 } from "./vsCodeFormComponents";
 
-interface AgentNodeData {
+type AgentNodeData = BaseAgentNodeData & {
   name?: string;
   role?: string;
-  personality?: string;
-  systemPrompt?: string;
   escalationThreshold?: number;
   escalationMessage?: string;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
   responseFormat?: string;
   personalityTags?: string[];
   enableFunctionCalling?: boolean;
-  confidenceThreshold?: number;
   contextWindow?: number;
-  [key: string]: unknown;
-}
+};
 
 interface AgentPropertiesPanelProps {
-  node: CanvasNode & { data: AgentNodeData };
-  onChange: (node: CanvasNode & { data: AgentNodeData }) => void;
+  node: CanvasNode;
+  onChange: (node: CanvasNode) => void;
 }
 
 export default function AgentPropertiesPanel({
   node,
   onChange,
 }: AgentPropertiesPanelProps) {
-  const data = node.data;
+  const defaultData: AgentNodeData = {
+    title: "Unnamed Agent",
+    description: "",
+    color: "",
+    icon: "",
+    model: "gemini-pro",
+    temperature: 0.7,
+  };
+  const data: AgentNodeData = isAgentNodeData(node.data)
+    ? { ...defaultData, ...(node.data as AgentNodeData) }
+    : defaultData;
 
   // Model options with descriptions
   const modelOptions = [
@@ -65,7 +69,10 @@ export default function AgentPropertiesPanel({
   ];
 
   const handleFieldChange = (field: keyof AgentNodeData, value: unknown) => {
-    const updatedData = { ...data, [field]: value };
+    const current: AgentNodeData = isAgentNodeData(node.data)
+      ? (node.data as AgentNodeData)
+      : defaultData;
+    const updatedData = { ...current, [field]: value };
     onChange({ ...node, data: updatedData });
   };
 

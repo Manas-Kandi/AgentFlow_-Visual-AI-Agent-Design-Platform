@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { figmaPropertiesTheme as theme } from "./propertiesPanelTheme";
 import { VSCodeButton } from "./vsCodeFormComponents";
-import { CanvasNode } from "@/types";
+import { CanvasNode, SimulatorNodeData } from "@/types";
+import { isSimulatorNodeData } from "@/utils/typeGuards";
 import { PanelSection } from "./PanelSection";
 
 interface SimulatorPropertiesPanelProps {
@@ -14,21 +15,24 @@ export default function SimulatorPropertiesPanel({
   node,
   onChange,
 }: SimulatorPropertiesPanelProps) {
-  // Use type assertion to allow testInput/expectedOutput as optional fields
-  const data = node.data as typeof node.data & {
-    testInput?: string;
-    expectedOutput?: string;
-  };
+  const defaultData: SimulatorNodeData = { testInput: "", expectedOutput: "" };
+  const data: SimulatorNodeData = isSimulatorNodeData(node.data)
+    ? { ...defaultData, ...(node.data as SimulatorNodeData) }
+    : defaultData;
 
-  const [testInput, setTestInput] = useState<string>(
-    () => data.testInput || ""
-  );
+  const [testInput, setTestInput] = useState<string>(data.testInput || "");
   const [expectedOutput, setExpectedOutput] = useState<string>(
-    () => data.expectedOutput || ""
+    data.expectedOutput || "",
   );
 
-  const handleFieldChange = (field: string, value: unknown) => {
-    onChange({ ...node, data: { ...node.data, [field]: value } });
+  const handleFieldChange = (
+    field: keyof SimulatorNodeData,
+    value: unknown,
+  ) => {
+    const current: SimulatorNodeData = isSimulatorNodeData(node.data)
+      ? (node.data as SimulatorNodeData)
+      : defaultData;
+    onChange({ ...node, data: { ...current, [field]: value } });
   };
 
   // Compose panel style from theme
