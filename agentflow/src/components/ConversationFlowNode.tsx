@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { MessageSquare, Plus, GitBranch, Trash2, Edit2, ChevronRight, User, Bot } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  MessageSquare,
+  Plus,
+  GitBranch,
+  Trash2,
+  Edit2,
+  ChevronRight,
+  User,
+  Bot,
+} from "lucide-react";
 import {
   figmaNodeStyle,
   selectedNodeStyle,
-  hoverNodeStyle
-} from './nodeStyles';
+  hoverNodeStyle,
+} from "./nodeStyles";
+import { nodeCategories } from "@/data/nodeDefinitions";
 
 interface ConversationNodeData {
   messages: ConversationMessage[];
@@ -161,17 +171,23 @@ export default function ConversationFlowNode({
   // - Use subtle hover/focus effects
   // - Use monospace font for message bubbles for a professional feel
 
-  const nodeStyle: React.CSSProperties = {
+  const nodeDef = nodeCategories
+    .flatMap((c) => c.nodes)
+    .find((n) => n.id === "conversation-flow");
+  const accentColor = nodeDef?.color || "var(--figma-accent)";
+
+  const nodeStyle: React.CSSProperties & { "--node-accent"?: string } = {
     ...figmaNodeStyle,
     left: node.position.x,
     top: node.position.y,
     width: 400,
     minHeight: 300,
-    borderColor: isSelected ? 'var(--figma-accent)' : 'var(--figma-border)',
+    borderWidth: 2,
+    "--node-accent": accentColor,
     zIndex: isSelected ? 10 : 5,
     fontFamily: 'Inter, Menlo, monospace',
     ...(isHovered ? hoverNodeStyle : {}),
-    ...(isSelected ? selectedNodeStyle : {})
+    ...(isSelected ? selectedNodeStyle : {}),
   };
 
   return (
@@ -184,10 +200,15 @@ export default function ConversationFlowNode({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className="bg-[#23232a] px-3 py-2 flex items-center justify-between border-b border-[#23232a]">
+      <div
+        className="px-3 py-2 flex items-center justify-between border-b"
+        style={{ backgroundColor: "#23232a", borderColor: accentColor }}
+      >
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-blue-500" />
-          <span className="font-medium text-white text-sm tracking-tight">Conversation Flow</span>
+          <MessageSquare className="w-5 h-5" style={{ color: accentColor }} />
+          <span className="font-medium text-white text-sm tracking-tight">
+            Conversation Flow
+          </span>
         </div>
         <div className="flex gap-1">
           <button

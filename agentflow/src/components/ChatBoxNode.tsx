@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { CanvasNode, Colors, Connection } from '@/types';
-import { supabase } from '@/lib/supabaseClient';
+import React, { useState } from "react";
+import { CanvasNode, Colors, Connection } from "@/types";
+import { supabase } from "@/lib/supabaseClient";
 import {
   figmaNodeStyle,
   selectedNodeStyle,
-  hoverNodeStyle
-} from './nodeStyles';
+  hoverNodeStyle,
+} from "./nodeStyles";
+import { nodeCategories } from "@/data/nodeDefinitions";
 
 interface ChatBoxNodeProps {
   node: CanvasNode;
@@ -70,16 +71,23 @@ export default function ChatBoxNode(props: ChatBoxNodeProps) {
       .then(result => console.log('Database update result:', result)); // Add this
   };
 
-  const nodeStyle: React.CSSProperties = {
+  const nodeDef = nodeCategories
+    .flatMap((c) => c.nodes)
+    .find((n) => n.subtype === node.subtype || n.id === node.subtype);
+  const accentColor = nodeDef?.color || "var(--figma-accent)";
+  const HeaderIcon = nodeDef?.icon as React.ElementType | undefined;
+
+  const nodeStyle: React.CSSProperties & { "--node-accent"?: string } = {
     ...figmaNodeStyle,
     left: node.position.x,
     top: node.position.y,
     width: node.size.width,
     height: node.size.height,
-    borderColor: isSelected ? 'var(--figma-accent)' : 'var(--figma-border)',
+    borderWidth: 2,
+    "--node-accent": accentColor,
     ...(isHovered ? hoverNodeStyle : {}),
     ...(isSelected ? selectedNodeStyle : {}),
-    zIndex: 3
+    zIndex: 3,
   };
 
   return (
@@ -93,9 +101,15 @@ export default function ChatBoxNode(props: ChatBoxNodeProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 p-2 border-b" style={{ borderColor: theme.border }}>
+      <div
+        className="flex items-center gap-2 p-2 border-b"
+        style={{ borderColor: accentColor }}
+      >
+        {HeaderIcon && (
+          <HeaderIcon className="w-4 h-4" style={{ color: accentColor }} />
+        )}
         <span className="text-sm font-medium truncate" style={{ color: theme.text }}>
-          {(node.data as ChatBoxNodeData).title || 'Text Input'}
+          {(node.data as ChatBoxNodeData).title || "Text Input"}
         </span>
       </div>
 
@@ -121,14 +135,15 @@ export default function ChatBoxNode(props: ChatBoxNodeProps) {
       {node.outputs.map((output, index) => (
         <div
           key={output.id}
-          className="absolute w-3 h-3 rounded-full border-2 cursor-pointer hover:scale-125 transition-transform bg-blue-500"
+          className="absolute w-3 h-3 rounded-full border-2 cursor-pointer hover:scale-125 transition-transform"
           style={{
             right: -6,
             top: (node.size.height / (node.outputs.length + 1)) * (index + 1) - 6,
-            borderColor: theme.accent,
-            zIndex: 10
+            borderColor: accentColor,
+            backgroundColor: accentColor,
+            zIndex: 10,
           }}
-          onMouseDown={e => {
+          onMouseDown={(e) => {
             e.stopPropagation();
             onOutputPortMouseDown(e, node.id, output.id, index);
           }}

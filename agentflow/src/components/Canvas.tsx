@@ -4,6 +4,11 @@ import { CanvasNode, Connection } from "@/types";
 import { theme } from "@/data/theme";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import ChatBoxNode from "./ChatBoxNode";
+import {
+  figmaNodeStyle,
+  hoverNodeStyle,
+  selectedNodeStyle,
+} from "./nodeStyles";
 
 const canvasStyle: React.CSSProperties = {
   backgroundColor: "#0D0D0D", // pure dark
@@ -79,6 +84,7 @@ export default function CanvasEngine(props: Props) {
     nodeId: string;
   } | null>(null);
   const [startNodeIdLocal, setStartNodeIdLocal] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -137,6 +143,14 @@ export default function CanvasEngine(props: Props) {
       if (found) return found.icon;
     }
     return null;
+  }, []);
+
+  const getNodeColor = useCallback((node: CanvasNode) => {
+    for (const category of nodeCategories) {
+      const found = category.nodes.find((n) => n.id === node.subtype);
+      if (found) return found.color;
+    }
+    return theme.accent;
   }, []);
 
   // Type guard for title and description
@@ -603,6 +617,9 @@ export default function CanvasEngine(props: Props) {
           const IconComponent = getNodeIcon(node);
           const isSelected = selectedNodeIds.includes(node.id);
           const isStart = node.id === startNodeId;
+          const isHovered = hoveredNodeId === node.id;
+          const nodeColor = getNodeColor(node);
+          const accentColor = isStart ? "#30d158" : nodeColor;
 
           // Chat Interface Node Rendering
           if (node.type === "ui" && node.subtype === "chat") {
@@ -623,32 +640,29 @@ export default function CanvasEngine(props: Props) {
             );
           }
 
+          const nodeStyle: React.CSSProperties & { "--node-accent"?: string } = {
+            ...figmaNodeStyle,
+            left: node.position.x,
+            top: node.position.y,
+            width: node.size.width,
+            height: node.size.height,
+            borderWidth: 2,
+            "--node-accent": accentColor,
+            ...(isHovered ? hoverNodeStyle : {}),
+            ...(isSelected ? selectedNodeStyle : {}),
+            zIndex: isSelected ? 10 : isStart ? 9 : 1,
+          };
+
           return (
             <div
               key={node.id}
-              className={`absolute cursor-pointer pointer-events-auto ${
-                isSelected ? "ring-2 ring-blue-400" : ""
-              } ${isStart ? "border-2 border-green-500 shadow-lg" : ""}`}
-              style={{
-                left: node.position.x,
-                top: node.position.y,
-                width: node.size.width,
-                height: node.size.height,
-                backgroundColor: theme.bgElevate,
-                border: `2px solid ${
-                  isStart ? "#30d158" : isSelected ? theme.accent : theme.border
-                }`,
-                borderRadius: "8px",
-                boxShadow: isSelected
-                  ? "0 0 0 2px rgba(59, 130, 246, 0.3)"
-                  : isStart
-                  ? "0 0 0 3px #30d15855"
-                  : "0 1px 3px rgba(0, 0, 0, 0.1)",
-                zIndex: isSelected ? 10 : isStart ? 9 : 1,
-              }}
+              className="absolute cursor-pointer pointer-events-auto rounded-lg transition-all"
+              style={nodeStyle}
               onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
               onClick={(e) => handleNodeClick(e, node.id)}
               onContextMenu={(e) => handleNodeContextMenu(e, node.id)}
+              onMouseEnter={() => setHoveredNodeId(node.id)}
+              onMouseLeave={() => setHoveredNodeId(null)}
             >
               {/* Start Node Indicator */}
               {isStart && (
@@ -683,10 +697,7 @@ export default function CanvasEngine(props: Props) {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     {IconComponent && (
-                      <IconComponent
-                        size={16}
-                        style={{ color: theme.accent }}
-                      />
+                      <IconComponent size={16} style={{ color: accentColor }} />
                     )}
                     <div
                       style={{
@@ -751,7 +762,7 @@ export default function CanvasEngine(props: Props) {
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      backgroundColor: theme.accent,
+                      backgroundColor: accentColor,
                     }}
                   />
                 </div>
@@ -799,7 +810,7 @@ export default function CanvasEngine(props: Props) {
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      backgroundColor: theme.accent,
+                      backgroundColor: accentColor,
                     }}
                   />
                 </div>
