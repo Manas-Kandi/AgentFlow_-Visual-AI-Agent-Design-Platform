@@ -50,7 +50,9 @@ export const VSCodeSelect: React.FC<VSCodeSelectProps> = ({
 }) => (
   <select
     value={value}
-    onChange={(e) => onValueChange(e.target.value)}
+    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+      onValueChange(e.target.value)
+    }
     style={{
       width: "100%",
       background: theme.colors.backgroundSecondary,

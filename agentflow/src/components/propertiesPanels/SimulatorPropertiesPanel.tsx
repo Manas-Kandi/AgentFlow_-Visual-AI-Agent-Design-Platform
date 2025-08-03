@@ -72,7 +72,7 @@ export default function SimulatorPropertiesPanel({
         <textarea
           style={textareaStyle}
           value={testInput}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             setTestInput(e.target.value);
             handleFieldChange("testInput", e.target.value);
           }}
@@ -86,7 +86,7 @@ export default function SimulatorPropertiesPanel({
         <textarea
           style={textareaStyle}
           value={expectedOutput}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             setExpectedOutput(e.target.value);
             handleFieldChange("expectedOutput", e.target.value);
           }}
