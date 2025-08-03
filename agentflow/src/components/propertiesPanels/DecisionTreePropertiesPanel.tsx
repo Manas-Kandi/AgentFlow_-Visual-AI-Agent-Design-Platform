@@ -7,6 +7,7 @@ import {
   VSCodeInput,
   VSCodeSelect,
   VSCodeButton,
+  VSCodeColorPicker,
 } from "./vsCodeFormComponents";
 
 interface DecisionTreeNodeData {
@@ -166,12 +167,9 @@ export default function DecisionTreePropertiesPanel({
         />
       </PanelSection>
       <PanelSection title="Color" description="Set a color for this node.">
-        <VSCodeInput
+        <VSCodeColorPicker
           value={color}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            handleFieldChange("color", e.target.value)
-          }
-          placeholder="#4B5563"
+          onChange={(v: string) => handleFieldChange("color", v)}
         />
       </PanelSection>
       <PanelSection title="Icon" description="Set an icon for this node.">

@@ -20,6 +20,8 @@ import {
   VSCodeInput,
   VSCodeSelect,
   VSCodeButton,
+  VSCodeSlider,
+  VSCodeTagInput,
 } from "./vsCodeFormComponents";
 
 interface AgentNodeData {
@@ -50,6 +52,9 @@ export default function AgentPropertiesPanel({
   onChange,
 }: AgentPropertiesPanelProps) {
   const data = node.data;
+  const personalityTags = Array.isArray(data?.personalityTags)
+    ? data.personalityTags
+    : [];
 
   // Model options with descriptions
   const modelOptions = [
@@ -197,10 +202,41 @@ export default function AgentPropertiesPanel({
             options={modelOptions}
             onValueChange={(value: string) => handleFieldChange("model", value)}
           />
+          <label
+            style={{
+              color: "#b3b3b3",
+              fontSize: 14,
+              marginTop: 8,
+              marginBottom: 4,
+            }}
+          >
+            Temperature
+          </label>
+          <VSCodeSlider
+            value={data?.temperature ?? 0.7}
+            min={0}
+            max={1}
+            step={0.01}
+            onValueChange={(v) => handleFieldChange("temperature", v)}
+          />
 
-          {/* TODO: VSCodeSlider not implemented. Insert slider for Temperature here. */}
-
-          {/* TODO: VSCodeSlider not implemented. Insert slider for Max Tokens here. */}
+          <label
+            style={{
+              color: "#b3b3b3",
+              fontSize: 14,
+              marginTop: 8,
+              marginBottom: 4,
+            }}
+          >
+            Max Tokens
+          </label>
+          <VSCodeSlider
+            value={data?.maxTokens ?? 1000}
+            min={1}
+            max={8000}
+            step={1}
+            onValueChange={(v) => handleFieldChange("maxTokens", v)}
+          />
 
           <label
             style={{
@@ -237,7 +273,10 @@ export default function AgentPropertiesPanel({
           >
             Personality Tags
           </label>
-          {/* TODO: VSCodeTagInput not implemented. Insert tag input for Personality Tags here. */}
+          <VSCodeTagInput
+            tags={personalityTags}
+            onChange={(tags) => handleFieldChange("personalityTags", tags)}
+          />
 
           <label
             style={{
@@ -266,10 +305,69 @@ export default function AgentPropertiesPanel({
           icon={<Zap size={16} />}
           defaultCollapsed={true}
         >
-          {/* TODO: VSCodeSlider not implemented. Insert slider for Confidence Threshold here. */}
-          {/* TODO: VSCodeToggle not implemented. Insert toggle for Function Calling here. */}
-          {/* TODO: VSCodeSlider not implemented. Insert slider for Context Window here. */}
-          <div />
+          <label
+            style={{
+              color: "#b3b3b3",
+              fontSize: 14,
+              marginBottom: 4,
+            }}
+          >
+            Enable Function Calling
+          </label>
+          <input
+            type="checkbox"
+            checked={!!data?.enableFunctionCalling}
+            onChange={(e) =>
+              handleFieldChange("enableFunctionCalling", e.target.checked)
+            }
+            style={{
+              accentColor: theme.colors.info,
+              width: 16,
+              height: 16,
+              borderRadius: theme.borderRadius.md,
+              border: `1px solid ${theme.colors.border}`,
+              marginBottom: theme.spacing.md,
+            }}
+          />
+          {data?.enableFunctionCalling && (
+            <>
+              <label
+                style={{
+                  color: "#b3b3b3",
+                  fontSize: 14,
+                  marginBottom: 4,
+                }}
+              >
+                Confidence Threshold
+              </label>
+              <VSCodeSlider
+                value={data?.confidenceThreshold ?? 0.5}
+                min={0}
+                max={1}
+                step={0.01}
+                onValueChange={(v) =>
+                  handleFieldChange("confidenceThreshold", v)
+                }
+              />
+              <label
+                style={{
+                  color: "#b3b3b3",
+                  fontSize: 14,
+                  marginTop: 8,
+                  marginBottom: 4,
+                }}
+              >
+                Context Window
+              </label>
+              <VSCodeSlider
+                value={data?.contextWindow ?? 1000}
+                min={0}
+                max={8000}
+                step={50}
+                onValueChange={(v) => handleFieldChange("contextWindow", v)}
+              />
+            </>
+          )}
         </PanelSection>
 
         {/* Escalation Logic */}
@@ -279,26 +377,45 @@ export default function AgentPropertiesPanel({
           icon={<AlertTriangle size={16} />}
           defaultCollapsed={true}
         >
-          {/* TODO: VSCodeSlider not implemented. Insert slider for Escalation Threshold here. */}
-
           <label
             style={{
-              color: "#111111",
+              color: "#b3b3b3",
               fontSize: 14,
-              marginTop: 8,
               marginBottom: 4,
             }}
           >
-            Escalation Message
+            Escalation Threshold
           </label>
-          <VSCodeInput
-            placeholder="Let me connect you with a human specialist..."
-            value={data?.escalationMessage ?? ""}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => handleFieldChange("escalationMessage", e.target.value)}
-            type="textarea"
+          <VSCodeSlider
+            value={data?.escalationThreshold ?? 0}
+            min={0}
+            max={1}
+            step={0.01}
+            onValueChange={(v) => handleFieldChange("escalationThreshold", v)}
           />
+
+          {((data?.escalationThreshold ?? 0) > 0) && (
+            <>
+              <label
+                style={{
+                  color: "#b3b3b3",
+                  fontSize: 14,
+                  marginTop: 8,
+                  marginBottom: 4,
+                }}
+              >
+                Escalation Message
+              </label>
+              <VSCodeInput
+                placeholder="Let me connect you with a human specialist..."
+                value={data?.escalationMessage ?? ""}
+                onChange={(
+                  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                ) => handleFieldChange("escalationMessage", e.target.value)}
+                type="textarea"
+              />
+            </>
+          )}
         </PanelSection>
 
         {/* Testing & Preview */}

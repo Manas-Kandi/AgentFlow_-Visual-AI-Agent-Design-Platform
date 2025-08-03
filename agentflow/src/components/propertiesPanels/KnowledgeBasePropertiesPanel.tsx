@@ -147,38 +147,40 @@ export default function KnowledgeBasePropertiesPanel({
           placeholder="Select operation"
         />
       </PanelSection>
-      <PanelSection title="Documents" description="JSON array of documents">
-        <VSCodeInput
-          style={{
-            minHeight: 48,
-            fontFamily: theme.typography.fontMono,
-            fontSize: theme.typography.fontSize.base,
-            background: theme.colors.backgroundTertiary,
-            color: theme.colors.textPrimary,
-            border: `1px solid ${theme.colors.border}`,
-            borderRadius: theme.borderRadius.sm,
-            padding: theme.spacing.inputPadding,
-            resize: "vertical",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-          value={documents}
-          onChange={(
-            e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-          ) => {
-            setDocuments(e.target.value);
-            try {
-              handleFieldChange("documents", JSON.parse(e.target.value));
-            } catch {}
-          }}
-          placeholder={`[
+      {operation === "store" && (
+        <PanelSection title="Documents" description="JSON array of documents">
+          <VSCodeInput
+            style={{
+              minHeight: 48,
+              fontFamily: theme.typography.fontMono,
+              fontSize: theme.typography.fontSize.base,
+              background: theme.colors.backgroundTertiary,
+              color: theme.colors.textPrimary,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.borderRadius.sm,
+              padding: theme.spacing.inputPadding,
+              resize: "vertical",
+              width: "100%",
+              boxSizing: "border-box",
+            }}
+            value={documents}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => {
+              setDocuments(e.target.value);
+              try {
+                handleFieldChange("documents", JSON.parse(e.target.value));
+              } catch {}
+            }}
+            placeholder={`[
   {
     "title": "Document 1",
     "content": "..."
   }
 ]`}
-        />
-      </PanelSection>
+          />
+        </PanelSection>
+      )}
       <PanelSection title="Metadata" description="Additional metadata as JSON">
         <VSCodeInput
           style={{
