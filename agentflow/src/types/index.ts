@@ -25,6 +25,8 @@ export interface ConversationFlowNodeData {
   initialState: string;
   persistState: boolean;
   transitions: { from: string; to: string; condition: string }[];
+  historyLength?: number;
+  contextRules?: { pattern: string; context: string }[];
 }
 
 export interface ChatNodeData {
@@ -203,6 +205,9 @@ export interface CanvasNode {
     | IfElseNodeData;
   inputs: { id: string; label: string; type?: string }[];
   outputs: { id: string; label: string; type?: string }[];
+  execution?: {
+    policy?: "all" | "any";
+  };
   output?: NodeOutput; // Add output property for workflow results
   context?: Record<string, unknown>; // Add context property for workflow results
 }
@@ -281,16 +286,4 @@ export interface Colors {
   green: string;
 }
 
-export type NodeOutput =
-  | string
-  | {
-      previousState?: string;
-      currentState?: string;
-      event?: string;
-      transition?: string;
-      output?: string;
-      message?: string;
-      gemini?: unknown;
-      error?: string;
-      info?: string; // Added for UI node info messages
-    };
+export type NodeOutput = string | Record<string, unknown>;
