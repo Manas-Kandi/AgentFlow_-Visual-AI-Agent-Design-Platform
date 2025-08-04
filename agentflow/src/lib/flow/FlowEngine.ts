@@ -3,15 +3,12 @@ import { AgentNode } from "../nodes/agent/AgentNode";
 import { ToolAgentNode } from "../nodes/agent/ToolAgentNode";
 import { IfElseNode } from "../nodes/logic/IfElseNode";
 import { KnowledgeBaseNode } from "../nodes/knowledge/KnowledgeBaseNode";
-// import { MessageNode } from "../nodes/conversation/MessageNode";
-// FIX: Update the import path if the file exists elsewhere, e.g.:
-// import { MessageNode } from "../nodes/conversation/message/MessageNode";
 import { MessageNode } from "../nodes/conversation/MessageNode";
-// Or, if the file does not exist, create MessageNode.ts in the expected directory.
 import { BaseNode } from "../nodes/base/BaseNode";
 import { PromptTemplateNode } from "../nodes/conversation/PromptTemplateNode";
 import { DecisionTreeNode } from "../nodes/logic/DecisionTreeNode";
 import { StateMachineNode } from "../nodes/logic/StateMachineNode";
+import { ConversationFlowNode } from "../nodes/conversation/ConversationFlowNode";
 
 export class FlowEngine {
   private nodes: CanvasNode[];
@@ -51,6 +48,8 @@ export class FlowEngine {
         return new DecisionTreeNode(node);
       case "state-machine":
         return new StateMachineNode(node);
+      case "conversation-flow":
+        return new ConversationFlowNode(node);
       case "ui":
       case "gui":
         // For UI nodes (like chat interface), we don't execute them
@@ -80,19 +79,33 @@ export class FlowEngine {
     const inputReady: Record<string, Set<string>> = {};
     // Map: nodeId -> number of required inputs
     const inputCounts: Record<string, number> = {};
+    // Map: nodeId -> execution policy
+    const executionPolicies: Record<string, "all" | "any"> = {};
     // Track which nodes have executed
     const executed = new Set<string>();
     // Output results
     this.nodeOutputs = {};
 
-    // --- PATCH: Move queue declaration above UI node loop so it is available for queuing downstream nodes ---
-    const queue: string[] = [];
-    // Build input counts and inputReady for each node (comprehensive fix)
+    // Build input counts, readiness sets, and execution policies for each node
     for (const node of this.nodes) {
       const incoming = this.connections.filter((c) => c.targetNode === node.id);
       inputCounts[node.id] = incoming.length;
       inputReady[node.id] = new Set();
+      executionPolicies[node.id] =
+        node.execution?.policy === "any" ? "any" : "all";
     }
+
+    const isReady = (nodeId: string) => {
+      const policy = executionPolicies[nodeId] || "all";
+      const required = inputCounts[nodeId];
+      const ready = inputReady[nodeId].size;
+      return (
+        required === 0 ||
+        (policy === "all" ? ready === required : ready > 0)
+      );
+    };
+
+    const pending = new Set<string>();
     // Define a type for UI node data
     type UINodeData = {
       content?: string;
@@ -111,7 +124,6 @@ export class FlowEngine {
         node.subtype === "gui"
       ) {
         const data = node.data as unknown as UINodeData;
-        // Comprehensive: try all common fields for user input
         let uiOutput = "";
         if (typeof data?.content === "string" && data.content.trim()) {
           uiOutput = data.content;
@@ -123,7 +135,6 @@ export class FlowEngine {
         ) {
           uiOutput = data.inputValue;
         } else if (Array.isArray(data?.messages) && data.messages.length > 0) {
-          // Use last user message if available
           const lastMsg = data.messages[data.messages.length - 1];
           if (typeof lastMsg === "string") {
             uiOutput = lastMsg;
@@ -139,13 +150,10 @@ export class FlowEngine {
         for (const conn of outgoing) {
           if (inputReady[conn.targetNode]) {
             inputReady[conn.targetNode].add(node.id);
-            if (
-              inputReady[conn.targetNode].size === inputCounts[conn.targetNode]
-            ) {
-              queue.push(conn.targetNode);
+            if (!executed.has(conn.targetNode) && isReady(conn.targetNode)) {
+              pending.add(conn.targetNode);
             }
           } else {
-            // Defensive: should never happen now
             console.warn(
               `[FlowEngine] inputReady not initialized for node ${conn.targetNode}. Skipping queuing.`
             );
@@ -164,132 +172,112 @@ export class FlowEngine {
         )
         .map((n) => n.id);
     }
-    // Add start nodes to the queue (after UI node downstreams)
     for (const id of startNodeIds) {
-      if (!queue.includes(id)) queue.push(id);
+      if (isReady(id)) pending.add(id);
     }
-
-    // Queue of nodes ready to execute
-    // const queue: string[] = [...startNodeIds];
 
     // Loop detection
     const visitCounts: Record<string, number> = {};
 
-    while (queue.length > 0) {
-      const nodeId = queue.shift()!;
-      if (executed.has(nodeId)) continue;
+    while (pending.size > 0) {
+      const batch = Array.from(pending);
+      pending.clear();
 
-      // Loop detection
-      visitCounts[nodeId] = (visitCounts[nodeId] || 0) + 1;
-      if (visitCounts[nodeId] > 1) {
-        this.nodeOutputs[nodeId] = {
-          error: "Loop detected: node executed more than once in the same run.",
-        };
-        continue;
-      }
+      await Promise.all(
+        batch.map(async (nodeId) => {
+          if (executed.has(nodeId)) return;
 
-      const node = this.nodes.find((n) => n.id === nodeId);
-      if (!node) continue;
-
-      const executor = this.getNodeExecutor(node);
-      if (!executor) {
-        // Already handled UI nodes above, so just skip
-        continue;
-      }
-
-      // Wait for all inputs to be ready (except for start nodes)
-      if (
-        inputCounts[node.id] > 0 &&
-        inputReady[node.id].size < inputCounts[node.id]
-      ) {
-        continue;
-      }
-
-      // Add delay for visual feedback
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Build context
-      const context = {
-        nodes: this.nodes,
-        connections: this.connections,
-        nodeOutputs: this.nodeOutputs,
-        currentNode: node,
-      };
-
-      // Execute node
-      let output: NodeOutput;
-      let errorMsg: string | undefined = undefined;
-      try {
-        output = await executor.execute(context);
-      } catch (error) {
-        output = {
-          error: error instanceof Error ? error.message : "Unknown error",
-        };
-        errorMsg = output.error as string;
-      }
-      this.nodeOutputs[node.id] = output;
-      executed.add(node.id);
-
-      // Emit log for real-time panel
-      if (emitLog) {
-        emitLog(
-          node.id,
-          `[${node.type}${
-            node.subtype ? ":" + node.subtype : ""
-          }] Executed node: ${getNodeTitle(node)}`,
-          output,
-          errorMsg
-        );
-      }
-
-      // Find outgoing connections
-      const outgoing = this.connections.filter((c) => c.sourceNode === node.id);
-
-      // Determine which branch(es) to follow
-      let nextConnections: typeof outgoing;
-      if (node.subtype === "if-else" || node.subtype === "decision-tree") {
-        // Only follow the connection whose sourceOutput matches the output
-        let outputStr: string = "";
-        if (typeof output === "string") {
-          outputStr = output;
-        } else if (
-          typeof output === "object" &&
-          output !== null &&
-          "output" in output &&
-          typeof (output as { output?: string }).output === "string"
-        ) {
-          outputStr = (output as { output?: string }).output || "";
-        } else {
-          outputStr = String(output);
-        }
-        nextConnections = outgoing.filter((c) => {
-          // For IfElse: output "true" or "false" → "true-path"/"false-path"
-          if (node.subtype === "if-else") {
-            if (outputStr === "true" && c.sourceOutput === "true-path")
-              return true;
-            if (outputStr === "false" && c.sourceOutput === "false-path")
-              return true;
-            return false;
+          visitCounts[nodeId] = (visitCounts[nodeId] || 0) + 1;
+          if (visitCounts[nodeId] > 1) {
+            this.nodeOutputs[nodeId] = {
+              error:
+                "Loop detected: node executed more than once in the same run.",
+            } as Record<string, unknown>;
+            executed.add(nodeId);
+            return;
           }
-          // For DecisionTree: output matches branch id
-          if (node.subtype === "decision-tree") {
-            return c.sourceOutput === outputStr;
-          }
-          return false;
-        });
-      } else {
-        // For all other nodes, follow all outgoing connections
-        nextConnections = outgoing;
-      }
 
-      // Mark downstream nodes as having received input from this node
-      for (const conn of nextConnections) {
-        inputReady[conn.targetNode].add(node.id);
-        // If all inputs ready, add to queue
-        if (inputReady[conn.targetNode].size === inputCounts[conn.targetNode]) {
-          queue.push(conn.targetNode);
-        }
-      }
+          const node = this.nodes.find((n) => n.id === nodeId);
+          if (!node) return;
+
+          const executor = this.getNodeExecutor(node);
+          if (!executor) return;
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const context = {
+            nodes: this.nodes,
+            connections: this.connections,
+            nodeOutputs: this.nodeOutputs,
+            currentNode: node,
+          };
+
+          let output: NodeOutput;
+          let errorMsg: string | undefined;
+          try {
+            output = await executor.execute(context);
+          } catch (error) {
+            const err =
+              error instanceof Error ? error.message : "Unknown error";
+            output = { error: err } as Record<string, unknown>;
+            errorMsg = err;
+          }
+          this.nodeOutputs[node.id] = output;
+          executed.add(node.id);
+
+          if (emitLog) {
+            emitLog(
+              node.id,
+              `[${node.type}${node.subtype ? ":" + node.subtype : ""}] Executed node: ${getNodeTitle(node)}`,
+              output,
+              errorMsg
+            );
+          }
+
+          const outgoing = this.connections.filter(
+            (c) => c.sourceNode === node.id
+          );
+
+          let nextConnections: typeof outgoing;
+          if (node.subtype === "if-else" || node.subtype === "decision-tree") {
+            let outputStr = "";
+            if (typeof output === "string") {
+              outputStr = output;
+            } else if (
+              typeof output === "object" &&
+              output !== null &&
+              "output" in output &&
+              typeof (output as { output?: string }).output === "string"
+            ) {
+              outputStr = (output as { output?: string }).output || "";
+            } else {
+              outputStr = String(output);
+            }
+            nextConnections = outgoing.filter((c) => {
+              if (node.subtype === "if-else") {
+                if (outputStr === "true" && c.sourceOutput === "true-path")
+                  return true;
+                if (outputStr === "false" && c.sourceOutput === "false-path")
+                  return true;
+                return false;
+              }
+              if (node.subtype === "decision-tree") {
+                return c.sourceOutput === outputStr;
+              }
+              return false;
+            });
+          } else {
+            nextConnections = outgoing;
+          }
+
+          for (const conn of nextConnections) {
+            inputReady[conn.targetNode].add(node.id);
+            if (!executed.has(conn.targetNode) && isReady(conn.targetNode)) {
+              pending.add(conn.targetNode);
+            }
+          }
+        })
+      );
     }
 
     return this.nodeOutputs;
