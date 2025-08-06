@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -10,7 +11,7 @@ import { Mail, Lock, Github, Globe } from "lucide-react";
 import { figmaPropertiesTheme as theme } from "@/components/propertiesPanels/propertiesPanelTheme";
 
 export default function LoginPage() {
-  const { signIn } = useAuth(); // Remove user from destructure
+  const { signIn, user, loading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +19,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Remove useEffect for user redirect
+  // Always redirect if user is present and not loading
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, loading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +34,8 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
       if (error) {
         setError(error.message);
-      } else {
-        router.replace("/dashboard"); // Use replace for seamless navigation
       }
+      // No need to manually redirect here; useEffect will handle it
     } catch (err: unknown) {
       if (typeof err === "object" && err && "message" in err) {
         setError((err as { message?: string }).message || "Login failed");
