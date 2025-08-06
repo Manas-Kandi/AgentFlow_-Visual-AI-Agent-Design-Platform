@@ -16,7 +16,14 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
 
   // List of public routes that don't require authentication
-  const publicRoutes = ["/login", "/signup", "/forgot-password"];
+  const publicRoutes = [
+    "/auth/login",
+    "/auth/signup",
+    "/auth/reset-password",
+    "/login",
+    "/signup",
+    "/forgot-password",
+  ];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
@@ -31,8 +38,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       // Redirect logic
       if (!session?.user && !isPublicRoute) {
         // User not logged in and trying to access protected route
-        router.push("/login");
-      } else if (session?.user && pathname === "/login") {
+        router.push("/auth/login");
+      } else if (session?.user && pathname === "/auth/login") {
         // User logged in but on login page
         router.push("/");
       }
@@ -51,7 +58,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       if (event === "SIGNED_IN") {
         router.push("/");
       } else if (event === "SIGNED_OUT") {
-        router.push("/login");
+        router.push("/auth/login");
       }
     });
 
