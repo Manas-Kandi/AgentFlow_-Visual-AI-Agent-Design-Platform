@@ -11,7 +11,7 @@ import DesignerCanvas from "@/components/DesignerCanvas";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function AgentFlowPage() {
