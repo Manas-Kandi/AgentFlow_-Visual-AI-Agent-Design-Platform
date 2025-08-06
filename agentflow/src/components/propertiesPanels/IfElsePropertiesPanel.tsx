@@ -33,22 +33,21 @@ export default function IfElsePropertiesPanel({
   node,
   onChange,
 }: IfElsePropertiesPanelProps) {
-
   const panelContainerStyle: React.CSSProperties = {
-    background: '#0D0D0D',
+    background: "#0D0D0D",
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     width: 360,
     minWidth: 360,
     maxWidth: 360,
-    height: '100%',
+    height: "100%",
     color: theme.colors.textPrimary,
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
+    overflowY: "auto",
+    overflowX: "hidden",
+    display: "flex",
+    flexDirection: "column",
     gap: theme.spacing.lg,
-    boxSizing: 'border-box',
+    boxSizing: "border-box",
   };
   function isIfElseNodeData(data: unknown): data is IfElseNodeData {
     return typeof data === "object" && data !== null && "condition" in data;

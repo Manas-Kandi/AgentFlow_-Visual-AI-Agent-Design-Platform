@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Project, CanvasNode, Connection, NodeType } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import ProjectDashboard from "@/components/ProjectDashboard";
@@ -11,10 +11,14 @@ import DesignerCanvas from "@/components/DesignerCanvas";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
-
-const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function AgentFlowPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // Restore all required state variables
   const [currentView, setCurrentView] = useState<"projects" | "designer">(
     "projects"
   );
@@ -46,13 +50,19 @@ export default function AgentFlowPage() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [showTester, setShowTester] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [history, setHistory] = useState<CanvasNode[][]>([]);
+  const [future, setFuture] = useState<CanvasNode[][]>([]);
   const [testFlowResult, setTestFlowResult] = useState<Record<
     string,
     unknown
   > | null>(null);
-  const [history, setHistory] = useState<CanvasNode[][]>([]);
-  const [future, setFuture] = useState<CanvasNode[][]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login");
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     fetchProjects();
@@ -64,10 +74,10 @@ export default function AgentFlowPage() {
   };
 
   const handleUndo = useCallback(() => {
-    setHistory((h) => {
+    setHistory((h: CanvasNode[][]) => {
       if (h.length === 0) return h;
       const prev = h[h.length - 1];
-      setFuture((f) => [nodes, ...f]);
+      setFuture((f: CanvasNode[][]) => [nodes, ...f]);
       setNodes(prev);
       showStatus("Undid");
       return h.slice(0, -1);
@@ -75,10 +85,10 @@ export default function AgentFlowPage() {
   }, [nodes]);
 
   const handleRedo = useCallback(() => {
-    setFuture((f) => {
+    setFuture((f: CanvasNode[][]) => {
       if (f.length === 0) return f;
       const [next, ...rest] = f;
-      setHistory((h) => [...h, nodes]);
+      setHistory((h: CanvasNode[][]) => [...h, nodes]);
       setNodes(next);
       showStatus("Redid");
       return rest;
@@ -227,7 +237,7 @@ export default function AgentFlowPage() {
             name: projectData.name,
             description: projectData.description,
             status: projectData.status,
-            user_id: DEFAULT_USER_ID,
+            user_id: user?.id,
             start_node_id: startNodeId,
           },
         ])
@@ -357,7 +367,7 @@ export default function AgentFlowPage() {
   };
 
   const handleNodeUpdate = (updatedNode: CanvasNode) => {
-    setHistory((h) => [...h, nodes]);
+    setHistory((h: CanvasNode[][]) => [...h, nodes]);
     setNodes(nodes.map((n) => (n.id === updatedNode.id ? updatedNode : n)));
     setFuture([]);
     showStatus("Saved");
@@ -368,11 +378,7 @@ export default function AgentFlowPage() {
     setTestFlowResult(null);
 
     try {
-      const result = await runWorkflow(
-        nodes,
-        connections,
-        startNodeId
-      );
+      const result = await runWorkflow(nodes, connections, startNodeId);
 
       setTestFlowResult(result);
     } catch (err) {
