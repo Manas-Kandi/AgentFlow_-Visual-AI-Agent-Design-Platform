@@ -59,16 +59,16 @@ export abstract class BaseNode implements NodeExecutor {
             output &&
             typeof output === "object" &&
             "message" in output &&
-            output.message
+            (output as Record<string, unknown>).message
           )
-            return output.message as string;
+            return (output as Record<string, unknown>).message as string;
           if (
             output &&
             typeof output === "object" &&
             "content" in output &&
-            output.content
+            (output as Record<string, unknown>).content
           )
-            return output.content as string;
+            return (output as Record<string, unknown>).content as string;
           // Fallback to node data
           type UIData = { content?: string; message?: string };
           const data = upstreamNode.data as UIData;
@@ -91,7 +91,8 @@ export abstract class BaseNode implements NodeExecutor {
               };
             }>;
           };
-          const geminiOutput = output.gemini as GeminiOutput;
+          const geminiOutput = (output as Record<string, unknown>)
+            .gemini as GeminiOutput;
           // Optionally extract text from Gemini output
           if (geminiOutput?.candidates?.[0]?.content?.parts?.[0]?.text) {
             return geminiOutput.candidates[0].content.parts[0].text as string;
