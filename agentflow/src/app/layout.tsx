@@ -27,12 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} ${jetBrains.variable} antialiased`}
-      >
-        <AuthProviderWrapper>
-          {children}
-        </AuthProviderWrapper>
+      <body className={`${inter.variable} ${jetBrains.variable} antialiased`}>
+        <AuthProviderWrapper>{children}</AuthProviderWrapper>
       </body>
     </html>
   );

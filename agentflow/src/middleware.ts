@@ -25,7 +25,10 @@ export function middleware(req: NextRequest) {
   if (pathname.startsWith("/api") && !pathname.startsWith("/api/auth")) {
     const token = req.cookies.get("sb-access-token")?.value;
     if (!token || !validateToken(token)) {
-      return NextResponse.json({ error: "Unauthorized: Invalid or missing token" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid or missing token" },
+        { status: 401 }
+      );
     }
     return NextResponse.next();
   }

@@ -11,11 +11,12 @@ import DesignerCanvas from "@/components/DesignerCanvas";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function AgentFlowPage() {
-  const { user, loading } = useAuth();
+  const { user, session } = useAuth();
+  const loading = false; // If you have a loading state, set it here
   const router = useRouter();
 
   // Restore all required state variables
@@ -65,8 +66,10 @@ export default function AgentFlowPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (user) {
+      fetchProjects();
+    }
+  }, [user]);
 
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
@@ -114,9 +117,11 @@ export default function AgentFlowPage() {
 
   const fetchProjects = async () => {
     try {
+      if (!user) return;
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -143,10 +148,12 @@ export default function AgentFlowPage() {
 
   const fetchNodes = async (projectId: string) => {
     try {
+      if (!user) return;
       const { data, error } = await supabase
         .from("nodes")
         .select("*")
-        .eq("project_id", projectId);
+        .eq("project_id", projectId)
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Error fetching nodes:", error);
@@ -178,17 +185,18 @@ export default function AgentFlowPage() {
 
   const fetchConnections = async (projectId: string) => {
     try {
+      if (!user) return;
       const { data, error } = await supabase
         .from("connections")
         .select("*")
-        .eq("project_id", projectId);
+        .eq("project_id", projectId)
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Error fetching connections:", error);
         return;
       }
 
-      // Transform the data to match our Connection interface
       const transformedConnections: Connection[] = (data || []).map((conn) => ({
         id: conn.id,
         sourceNode: conn.source_node,
@@ -230,6 +238,7 @@ export default function AgentFlowPage() {
     projectData: Omit<Project, "id" | "lastModified" | "nodeCount">
   ) => {
     try {
+      if (!user) return;
       const { data, error } = await supabase
         .from("projects")
         .insert([
@@ -237,7 +246,7 @@ export default function AgentFlowPage() {
             name: projectData.name,
             description: projectData.description,
             status: projectData.status,
-            user_id: user?.id,
+            user_id: user.id,
             start_node_id: startNodeId,
           },
         ])

@@ -130,7 +130,10 @@ export default function LoginPage() {
             Sign up
           </a>
           {/* Adjusted from 'link' */}
-          <a href="/auth/reset-password" style={{ color: theme.colors.textAccent }}>
+          <a
+            href="/auth/reset-password"
+            style={{ color: theme.colors.textAccent }}
+          >
             Forgot password?
           </a>
         </div>

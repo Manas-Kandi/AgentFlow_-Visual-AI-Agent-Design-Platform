@@ -16,28 +16,32 @@ export default function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        backgroundColor: "#0D0D0D",
-        color: "#FFFFFF",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "#0D0D0D",
+          color: "#FFFFFF",
+        }}
+      >
         <h1>Loading...</h1>
       </div>
     );
   }
 
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100vh",
-      backgroundColor: "#0D0D0D",
-      color: "#FFFFFF",
-    }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        backgroundColor: "#0D0D0D",
+        color: "#FFFFFF",
+      }}
+    >
       <h1>Welcome to the Dashboard</h1>
     </div>
   );
