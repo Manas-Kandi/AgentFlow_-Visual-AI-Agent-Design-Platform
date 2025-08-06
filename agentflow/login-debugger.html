@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Debugger</title>
+    <style>
+      body {
+        background: #0d1117;
+        color: white;
+        font-family: monospace;
+        padding: 20px;
+        margin: 0;
+      }
+      .debug-box {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 10px 0;
+      }
+      .status {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background: #1a7f37;
+      }
+      .error {
+        background: #da3633;
+      }
+      .warning {
+        background: #fb8500;
+      }
+      .info {
+        background: #1f6feb;
+      }
+      button {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #2ea043;
+      }
+      input {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: white;
+        padding: 8px;
+        border-radius: 4px;
+        width: 300px;
+        margin: 5px;
+      }
+      pre {
+        background: #0d1117;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚨 LOGIN EMERGENCY DEBUGGER 🚨</h1>
+
+    <div class="debug-box">
+      <h2>Step 1: Environment Check</h2>
+      <div id="env-check">Checking...</div>
+      <button onclick="checkEnvironment()">🔍 Check Environment</button>
+    </div>
+
+    <div class="debug-box">
+      <h2>Step 2: Supabase Connection Test</h2>
+      <div id="supabase-check">Not tested</div>
+      <button onclick="testSupabaseConnection()">🔗 Test Supabase</button>
+    </div>
+
+    <div class="debug-box">
+      <h2>Step 3: Emergency Login Test</h2>
+      <div>
+        <input
+          type="email"
+          id="test-email"
+          placeholder="Your email"
+          value="manaskandimalla2002@gmail.com"
+        />
+        <input type="password" id="test-password" placeholder="Your password" />
+      </div>
+      <button onclick="emergencyLogin()">🚀 Emergency Login</button>
+      <div id="login-result">Not tested</div>
+    </div>
+
+    <div class="debug-box">
+      <h2>Step 4: Debug Logs</h2>
+      <pre id="debug-logs">No logs yet...</pre>
+      <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      let logs = [];
+
+      function addLog(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        logs.push(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        document.getElementById("debug-logs").textContent = logs.join("\n");
+      }
+
+      function clearLogs() {
+        logs = [];
+        document.getElementById("debug-logs").textContent = "Logs cleared...";
+      }
+
+      function checkEnvironment() {
+        addLog("🔍 Checking environment variables...");
+
+        // Try to get env vars from window if available
+        const supabaseUrl = window.NEXT_PUBLIC_SUPABASE_URL || "NOT_FOUND";
+        const supabaseKey = window.NEXT_PUBLIC_SUPABASE_ANON_KEY || "NOT_FOUND";
+
+        let status = "";
+        let className = "";
+
+        if (supabaseUrl === "NOT_FOUND" || supabaseKey === "NOT_FOUND") {
+          status =
+            "❌ Environment variables missing! You need to set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file";
+          className = "error";
+          addLog("❌ Environment variables missing", "error");
+        } else {
+          status = "✅ Environment variables found";
+          className = "success";
+          addLog("✅ Environment variables found", "success");
+        }
+
+        document.getElementById(
+          "env-check"
+        ).innerHTML = `<div class="status ${className}">${status}</div>`;
+
+        // Also try to check if we can access process.env (probably won't work in browser)
+        addLog(`Supabase URL: ${supabaseUrl.substring(0, 20)}...`);
+        addLog(`Supabase Key: ${supabaseKey.substring(0, 20)}...`);
+      }
+
+      let supabase = null;
+
+      function testSupabaseConnection() {
+        addLog("🔗 Testing Supabase connection...");
+
+        // You'll need to replace these with your actual values for testing
+        const SUPABASE_URL = prompt("Enter your Supabase URL:");
+        const SUPABASE_ANON_KEY = prompt("Enter your Supabase Anon Key:");
+
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+          const errorMsg = "❌ Need Supabase credentials to test";
+          document.getElementById(
+            "supabase-check"
+          ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+          addLog(errorMsg, "error");
+          return;
+        }
+
+        try {
+          // Create Supabase client
+          supabase = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+          );
+
+          // Test connection
+          supabase.auth
+            .getSession()
+            .then(({ data, error }) => {
+              if (error) {
+                const errorMsg = `❌ Supabase connection failed: ${error.message}`;
+                document.getElementById(
+                  "supabase-check"
+                ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+                addLog(errorMsg, "error");
+              } else {
+                const successMsg = "✅ Supabase connection successful!";
+                document.getElementById(
+                  "supabase-check"
+                ).innerHTML = `<div class="status success">${successMsg}</div>`;
+                addLog(successMsg, "success");
+                addLog(`Session data: ${JSON.stringify(data, null, 2)}`);
+              }
+            })
+            .catch((err) => {
+              const errorMsg = `❌ Supabase connection error: ${err.message}`;
+              document.getElementById(
+                "supabase-check"
+              ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+              addLog(errorMsg, "error");
+            });
+        } catch (err) {
+          const errorMsg = `❌ Failed to create Supabase client: ${err.message}`;
+          document.getElementById(
+            "supabase-check"
+          ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+          addLog(errorMsg, "error");
+        }
+      }
+
+      async function emergencyLogin() {
+        const email = document.getElementById("test-email").value;
+        const password = document.getElementById("test-password").value;
+
+        if (!email || !password) {
+          const errorMsg = "❌ Please enter email and password";
+          document.getElementById(
+            "login-result"
+          ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+          addLog(errorMsg, "error");
+          return;
+        }
+
+        if (!supabase) {
+          const errorMsg = "❌ Supabase not connected. Test connection first.";
+          document.getElementById(
+            "login-result"
+          ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+          addLog(errorMsg, "error");
+          return;
+        }
+
+        addLog("🚀 Attempting emergency login...");
+        addLog(`Email: ${email}`);
+        addLog("Password: [HIDDEN]");
+
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password: password,
+          });
+
+          addLog(`Login response received`);
+          addLog(`Data: ${JSON.stringify(data, null, 2)}`);
+          addLog(`Error: ${JSON.stringify(error, null, 2)}`);
+
+          if (error) {
+            const errorMsg = `❌ Login failed: ${error.message}`;
+            document.getElementById(
+              "login-result"
+            ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+            addLog(errorMsg, "error");
+          } else if (data.user) {
+            const successMsg = `✅ LOGIN SUCCESSFUL! User: ${data.user.email}`;
+            document.getElementById(
+              "login-result"
+            ).innerHTML = `<div class="status success">${successMsg}</div>`;
+            addLog(successMsg, "success");
+            addLog(`User object: ${JSON.stringify(data.user, null, 2)}`);
+
+            // Redirect to your app
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 2000);
+          } else {
+            const warningMsg = "⚠️ Login returned no user or error";
+            document.getElementById(
+              "login-result"
+            ).innerHTML = `<div class="status warning">${warningMsg}</div>`;
+            addLog(warningMsg, "warning");
+          }
+        } catch (err) {
+          const errorMsg = `❌ Login exception: ${err.message}`;
+          document.getElementById(
+            "login-result"
+          ).innerHTML = `<div class="status error">${errorMsg}</div>`;
+          addLog(errorMsg, "error");
+          addLog(`Stack trace: ${err.stack}`);
+        }
+      }
+
+      // Run environment check on load
+      window.onload = function () {
+        addLog("🚀 Login debugger started");
+        checkEnvironment();
+      };
+    </script>
+  </body>
+</html>
