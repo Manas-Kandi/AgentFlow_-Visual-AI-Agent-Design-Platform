@@ -15,8 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function AgentFlowPage() {
-  const { user, session } = useAuth();
-  const loading = false; // If you have a loading state, set it here
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   // Restore all required state variables
