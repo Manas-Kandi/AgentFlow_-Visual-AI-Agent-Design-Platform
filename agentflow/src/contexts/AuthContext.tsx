@@ -33,25 +33,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("[AuthContext] Mount: Fetching initial user...");
     getUser().then((u) => {
-      console.log("Initial user state:", u);
+      console.log("[AuthContext] Initial user state:", u);
       if (u && !u.email_confirmed_at) {
-        console.warn("User email not verified.");
+        console.warn("[AuthContext] User email not verified.");
       }
       setUser(u);
       setLoading(false);
+      console.log("[AuthContext] Set user:", u, "Set loading: false");
     });
     const { data: listener } = onAuthStateChange((event, session) => {
-      console.log("Auth state change event:", event);
-      console.log("Session data:", session);
+      console.log("[AuthContext] Auth state change event:", event);
+      console.log("[AuthContext] Session data:", session);
       if (session?.user && !session.user.email_confirmed_at) {
-        console.warn("User email not verified.");
+        console.warn("[AuthContext] User email not verified.");
       }
       setUser(session?.user ?? null);
       setLoading(false);
+      console.log("[AuthContext] Set user:", session?.user ?? null, "Set loading: false");
     });
     return () => {
       listener?.subscription.unsubscribe();
+      console.log("[AuthContext] Unmounted, unsubscribed from auth state changes.");
     };
   }, []);
 

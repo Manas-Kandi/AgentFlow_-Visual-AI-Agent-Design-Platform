@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const hasRedirected = useRef(false);
 
   // List of public routes that don't require authentication
   const publicRoutes = [
@@ -27,80 +25,31 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   ];
   const isPublicRoute = publicRoutes.includes(pathname);
 
+  // Centralized redirect logic using context
   useEffect(() => {
-    let isMounted = true;
+    if (loading) return;
+    // Only redirect once per route change
+    if (hasRedirected.current) return;
+    if (!user && !isPublicRoute) {
+      hasRedirected.current = true;
+      router.replace("/auth/login");
+    } else if (user && pathname === "/auth/login") {
+      hasRedirected.current = true;
+      router.replace("/dashboard");
+    }
+  }, [user, loading, pathname, router, isPublicRoute]);
 
-    // Get initial session
-    const getSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!isMounted) return;
-
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        // Only redirect if we haven't already redirected
-        if (!hasRedirected) {
-          if (!session?.user && !isPublicRoute) {
-            // User not logged in and trying to access protected route
-            console.log("AuthWrapper: Redirecting to login - no user");
-            setHasRedirected(true);
-            router.replace("/auth/login");
-          } else if (session?.user && pathname === "/auth/login") {
-            // User logged in but on login page - redirect to dashboard
-            console.log("AuthWrapper: Redirecting to dashboard - user on login page");
-            setHasRedirected(true);
-            router.replace("/dashboard");
-          }
-        }
-      } catch (error) {
-        console.error("Error getting session:", error);
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    getSession();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
-
-      if (!isMounted) return;
-
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      // Handle auth state changes with redirect prevention
-      if (event === "SIGNED_IN" && !hasRedirected) {
-        console.log("AuthWrapper: User signed in, redirecting to dashboard");
-        setHasRedirected(true);
-        router.replace("/dashboard");
-      } else if (event === "SIGNED_OUT" && !hasRedirected) {
-        console.log("AuthWrapper: User signed out, redirecting to login");
-        setHasRedirected(true);
-        router.replace("/auth/login");
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [router, pathname, isPublicRoute, hasRedirected]);
+  // Reset redirect flag on route change
+  useEffect(() => {
+    hasRedirected.current = false;
+  }, [pathname]);
 
   // Reset redirect flag when pathname changes
   useEffect(() => {
-    setHasRedirected(false);
+    hasRedirected.current = false;
   }, [pathname]);
 
-  // Show loading spinner
+  // Show loading spinner if loading
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
@@ -111,12 +60,10 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       </div>
     );
   }
-
-  // Show login page if not authenticated and on protected route
-  if (!user && !isPublicRoute) {
-    return null; // Will redirect to /auth/login
+  // Only render children if authenticated or on public route
+  if (user || isPublicRoute) {
+    return <>{children}</>;
   }
-
-  // Show children if authenticated or on public route
-  return <>{children}</>;
+  // Otherwise, null (redirect in progress)
+  return null;
 }
