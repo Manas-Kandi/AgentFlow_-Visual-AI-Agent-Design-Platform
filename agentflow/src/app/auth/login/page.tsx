@@ -19,9 +19,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Always redirect if user is present and not loading
+  // FIXED: Redirect to dashboard consistently
   useEffect(() => {
     if (!loading && user) {
+      console.log("User authenticated, redirecting to dashboard");
       router.replace("/dashboard");
     }
   }, [user, loading, router]);
@@ -30,22 +31,67 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
     try {
+      console.log("Starting login process...");
       const { error } = await signIn(email, password);
+
       if (error) {
+        console.error("Login error:", error);
         setError(error.message);
+        setIsLoading(false);
+        return;
       }
-      // No need to manually redirect here; useEffect will handle it
+
+      console.log("Login successful, auth state change will handle redirect");
+      // Don't set isLoading to false here - let the redirect happen
     } catch (err: unknown) {
+      console.error("Login exception:", err);
       if (typeof err === "object" && err && "message" in err) {
         setError((err as { message?: string }).message || "Login failed");
       } else {
         setError("Login failed");
       }
-    } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading spinner if redirecting or loading
+  if (loading || user) {
+    return (
+      <div
+        style={{
+          background: theme.colors.background,
+          color: theme.colors.textPrimary,
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: `4px solid ${theme.colors.buttonPrimary}`,
+              borderTop: `4px solid ${theme.colors.backgroundSecondary}`,
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px auto",
+            }}
+          />
+          <p style={{ color: theme.colors.textSecondary }}>Loading AgentFlow...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -61,9 +107,9 @@ export default function LoginPage() {
       <form
         onSubmit={handleLogin}
         style={{
-          background: theme.colors.backgroundSecondary, // Adjusted from 'panel'
+          background: theme.colors.backgroundSecondary,
           borderRadius: theme.borderRadius.lg,
-          boxShadow: theme.shadows.medium, // Adjusted from 'shadows.panel'
+          boxShadow: theme.shadows.medium,
           padding: "32px",
           minWidth: "340px",
           maxWidth: "400px",
@@ -73,56 +119,110 @@ export default function LoginPage() {
         }}
       >
         <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Sign In</h2>
+
         {error && (
-          <div style={{ color: theme.colors.error, fontSize: "13px" }}>
+          <div
+            style={{
+              color: theme.colors.error,
+              fontSize: "13px",
+              padding: "8px 12px",
+              backgroundColor: "rgba(244, 67, 54, 0.1)",
+              borderRadius: "4px",
+              border: `1px solid ${theme.colors.error}`,
+            }}
+          >
             {error}
           </div>
         )}
-        {/* Email input (single, with icon inline) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Mail size={16} style={{ color: theme.colors.textSecondary }} />
+
+        <div>
           <VSCodeInput
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="manaskandimalla2002@gmail.com"
             required
+            disabled={isLoading}
+            style={{ marginBottom: "12px" }}
+          />
+          <Mail
+            size={16}
+            style={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: theme.colors.textSecondary,
+            }}
           />
         </div>
-        {/* Password input (single, with icon inline) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Lock size={16} style={{ color: theme.colors.textSecondary }} />
+
+        <div style={{ position: "relative" }}>
           <VSCodeInput
             type="password"
-            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••••••••••"
             required
+            disabled={isLoading}
+          />
+          <Lock
+            size={16}
+            style={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: theme.colors.textSecondary,
+            }}
           />
         </div>
-        <label
+
+        <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
+            justifyContent: "space-between",
             fontSize: "13px",
           }}
         >
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            style={{ accentColor: theme.colors.buttonPrimary }} // Adjusted from 'accent'
-          />
-          Remember me
-        </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              disabled={isLoading}
+              style={{ accentColor: theme.colors.borderActive }}
+            />
+            Remember me
+          </label>
+          <a
+            href="/auth/reset-password"
+            style={{
+              color: theme.colors.textAccent,
+              textDecoration: "none",
+            }}
+          >
+            Forgot password?
+          </a>
+        </div>
+
         <VSCodeButton
           type="submit"
-          loading={isLoading}
-          style={{ width: "100%", marginTop: "8px" }}
+          disabled={isLoading}
+          style={{
+            backgroundColor: theme.colors.buttonPrimary,
+            color: "white",
+            padding: "12px",
+            fontSize: "14px",
+            fontWeight: 500,
+            opacity: isLoading ? 0.7 : 1,
+            cursor: isLoading ? "not-allowed" : "pointer",
+          }}
         >
-          Login
+          {isLoading ? "Signing in..." : "Login"}
         </VSCodeButton>
+
         <div
           style={{
             display: "flex",
@@ -130,40 +230,64 @@ export default function LoginPage() {
             fontSize: "13px",
           }}
         >
-          {/* Adjusted from 'link' */}
-          <a href="/auth/signup" style={{ color: theme.colors.textAccent }}>
+          <a
+            href="/auth/signup"
+            style={{
+              color: theme.colors.textAccent,
+              textDecoration: "none",
+            }}
+          >
             Sign up
           </a>
-          {/* Adjusted from 'link' */}
-          <a
-            href="/auth/reset-password"
-            style={{ color: theme.colors.textAccent }}
-          >
-            Forgot password?
-          </a>
         </div>
+
         <div
           style={{
-            marginTop: "12px",
             display: "flex",
-            gap: "10px",
-            justifyContent: "center",
+            gap: "12px",
+            marginTop: "16px",
           }}
         >
-          <VSCodeButton
-            variant="secondary"
-            disabled
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          <button
+            type="button"
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: "8px",
+              backgroundColor: theme.colors.backgroundSecondary,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: "4px",
+              color: theme.colors.textSecondary,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
           >
-            <Globe size={16} /> Google
-          </VSCodeButton>
-          <VSCodeButton
-            variant="secondary"
-            disabled
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            <Github size={16} />
+            GitHub
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: "8px",
+              backgroundColor: theme.colors.backgroundSecondary,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: "4px",
+              color: theme.colors.textSecondary,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
           >
-            <Github size={16} /> GitHub
-          </VSCodeButton>
+            <Globe size={16} />
+            Google
+          </button>
         </div>
       </form>
     </div>
