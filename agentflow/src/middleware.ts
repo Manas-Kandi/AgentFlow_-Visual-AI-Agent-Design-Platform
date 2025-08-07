@@ -4,7 +4,7 @@ import { validateToken } from "@/lib/utils"; // Assuming a utility function for 
 const PUBLIC_PATHS = [
   "/auth",
   "/auth/",
-  "/auth/login",
+  "/login",
   "/auth/signup",
   "/auth/reset-password",
   "/auth/verify-email",
@@ -37,7 +37,7 @@ export function middleware(req: NextRequest) {
   if (!pathname.startsWith("/auth") && !pathname.startsWith("/landing")) {
     const token = req.cookies.get("sb-access-token")?.value;
     if (!token || !validateToken(token)) {
-      const loginUrl = new URL("/auth/login", req.url);
+      const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("redirect", sanitizeRedirect(pathname));
       return NextResponse.redirect(loginUrl);
     }

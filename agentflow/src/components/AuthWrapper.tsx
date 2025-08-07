@@ -17,11 +17,10 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   // List of public routes that don't require authentication
   const publicRoutes = [
-    "/auth/login",
-    "/auth/signup", 
+    "/auth/signup",
     "/auth/reset-password",
     "/auth/verify-email",
-    "/login", // Support both /login and /auth/login
+    "/login",
     "/signup",
     "/forgot-password",
   ];
@@ -45,21 +44,14 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     if (!user && !isPublicRoute) {
       console.log("[AuthWrapper] Redirecting to login - no user, protected route");
       hasRedirected.current = true;
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
 
-    // If user is authenticated and on login page, redirect to dashboard
-    if (user && pathname === "/auth/login") {
-      console.log("[AuthWrapper] Redirecting to dashboard - user authenticated on login page");
-      hasRedirected.current = true;
-      router.replace("/dashboard");
-      return;
-    }
-    
-    // If user is authenticated and on old login page, redirect to dashboard
     if (user && pathname === "/login") {
-      console.log("[AuthWrapper] Redirecting to dashboard - user authenticated on old login page");
+      console.log(
+        "[AuthWrapper] Redirecting to dashboard - user authenticated on login page"
+      );
       hasRedirected.current = true;
       router.replace("/dashboard");
       return;

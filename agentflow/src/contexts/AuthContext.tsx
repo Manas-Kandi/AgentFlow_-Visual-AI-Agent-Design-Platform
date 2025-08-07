@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Instant redirect after login
   React.useEffect(() => {
-    if (user && !loading && (pathname === "/auth/login" || pathname === "/login")) {
+    if (user && !loading && pathname === "/login") {
       router.replace("/dashboard");
     }
   }, [user, loading, pathname, router]);

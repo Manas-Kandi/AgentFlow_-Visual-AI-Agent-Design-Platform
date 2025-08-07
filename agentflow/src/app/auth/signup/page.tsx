@@ -169,7 +169,7 @@ export default function SignupPage() {
           }}
         >
           <a
-            href="/auth/login"
+            href="/login"
             style={{ color: theme.colors.textAccent }} // Adjusted from 'link'
           >
             Back to login
