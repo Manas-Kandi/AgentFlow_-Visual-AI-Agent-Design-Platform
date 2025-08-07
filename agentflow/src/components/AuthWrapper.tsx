@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 interface AuthWrapperProps {
   children: React.ReactNode;
 }
@@ -17,39 +18,55 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // List of public routes that don't require authentication
   const publicRoutes = [
     "/auth/login",
-    "/auth/signup",
+    "/auth/signup", 
     "/auth/reset-password",
-    "/login",
+    "/auth/verify-email",
+    "/login", // Support both /login and /auth/login
     "/signup",
     "/forgot-password",
   ];
+  
   const isPublicRoute = publicRoutes.includes(pathname);
-
-  // Centralized redirect logic using context
-  useEffect(() => {
-    if (loading) return;
-    // Only redirect once per route change
-    if (hasRedirected.current) return;
-    if (!user && !isPublicRoute) {
-      hasRedirected.current = true;
-      router.replace("/auth/login");
-    } else if (user && pathname === "/auth/login") {
-      hasRedirected.current = true;
-      router.replace("/dashboard");
-    }
-  }, [user, loading, pathname, router, isPublicRoute]);
-
-  // Reset redirect flag on route change
-  useEffect(() => {
-    hasRedirected.current = false;
-  }, [pathname]);
 
   // Reset redirect flag when pathname changes
   useEffect(() => {
     hasRedirected.current = false;
   }, [pathname]);
 
-  // Show loading spinner if loading
+  // Handle authentication redirects
+  useEffect(() => {
+    // Don't redirect while loading auth state
+    if (loading) return;
+    
+    // Prevent multiple redirects for the same route
+    if (hasRedirected.current) return;
+
+    // If user is not authenticated and trying to access protected route
+    if (!user && !isPublicRoute) {
+      console.log("[AuthWrapper] Redirecting to login - no user, protected route");
+      hasRedirected.current = true;
+      router.replace("/auth/login");
+      return;
+    }
+
+    // If user is authenticated and on login page, redirect to dashboard
+    if (user && pathname === "/auth/login") {
+      console.log("[AuthWrapper] Redirecting to dashboard - user authenticated on login page");
+      hasRedirected.current = true;
+      router.replace("/dashboard");
+      return;
+    }
+    
+    // If user is authenticated and on old login page, redirect to dashboard
+    if (user && pathname === "/login") {
+      console.log("[AuthWrapper] Redirecting to dashboard - user authenticated on old login page");
+      hasRedirected.current = true;
+      router.replace("/dashboard");
+      return;
+    }
+  }, [user, loading, pathname, router, isPublicRoute]);
+
+  // Show loading spinner while auth state is loading
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
@@ -60,10 +77,21 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       </div>
     );
   }
-  // Only render children if authenticated or on public route
+
+  // Only render children if:
+  // - User is authenticated (for protected routes)
+  // - On a public route (regardless of auth state)
   if (user || isPublicRoute) {
     return <>{children}</>;
   }
-  // Otherwise, null (redirect in progress)
-  return null;
+
+  // Show loading while redirect is in progress for protected routes
+  return (
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-400">Redirecting to login...</p>
+      </div>
+    </div>
+  );
 }
