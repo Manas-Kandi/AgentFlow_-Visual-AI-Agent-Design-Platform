@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const router = useRouter();
   type SupabaseUser = {
     id: string;
     email?: string;
@@ -27,11 +29,11 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
       if (session?.user) {
         console.log("Already logged in, redirecting...");
-        window.location.replace("/");
+        router.replace("/dashboard");
       }
     };
     checkUser();
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,20 +65,7 @@ export default function LoginPage() {
         console.log("✅ Login successful:", data.user);
         setSuccess(true);
         setUser(data.user as unknown as SupabaseUser);
-
-        // Multiple redirect attempts
-        console.log("🔄 Attempting redirects...");
-        // Immediate redirect
-        window.location.href = "/";
-        // Backup redirects
-        setTimeout(() => {
-          window.location.replace("/");
-        }, 500);
-        setTimeout(() => {
-          if (window.location.pathname === "/login") {
-            window.location.assign("/");
-          }
-        }, 1000);
+        router.replace("/dashboard");
       }
     } catch (err) {
       console.error("💥 Login error:", err);
@@ -87,23 +76,6 @@ export default function LoginPage() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const forceRedirect = () => {
-    console.log("🚀 Force redirect clicked");
-    window.location.href = "/";
-  };
-
-  const checkAndRedirect = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    console.log("Current session:", session?.user?.email || "No user");
-    if (session?.user) {
-      window.location.href = "/";
-    } else {
-      alert("Not logged in yet");
     }
   };
 
@@ -128,21 +100,9 @@ export default function LoginPage() {
 
           {success && user && (
             <div className="mb-4 p-4 bg-green-900/50 border border-green-700 rounded-md">
-              <p className="text-green-200 text-sm mb-3">
+              <p className="text-green-200 text-sm">
                 ✅ Login successful! Welcome {user.email}
               </p>
-              <button
-                onClick={forceRedirect}
-                className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors mb-2"
-              >
-                🚀 Go to AgentFlow →
-              </button>
-              <button
-                onClick={checkAndRedirect}
-                className="w-full py-1 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors"
-              >
-                Check Session & Redirect
-              </button>
             </div>
           )}
 
@@ -194,16 +154,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Debug section */}
-          <div className="mt-6 p-3 bg-gray-800 rounded-md">
-            <p className="text-xs text-gray-400 mb-2">Debug:</p>
-            <button
-              onClick={checkAndRedirect}
-              className="w-full py-1 px-2 bg-gray-700 hover:bg-gray-600 text-xs text-white rounded transition-colors"
-            >
-              Check Auth Status
-            </button>
-          </div>
         </div>
       </div>
     </div>
