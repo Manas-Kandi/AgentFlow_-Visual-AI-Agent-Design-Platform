@@ -1,4 +1,4 @@
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 
 const getURL = () => {
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       throw new Error('Customer ID not found.');
     }
 
+    const stripe = getStripe();
     const { url } = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${getURL()}account`,

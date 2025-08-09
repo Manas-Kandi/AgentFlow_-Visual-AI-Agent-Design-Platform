@@ -1,32 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SidebarProvider,
   Sidebar,
   SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuBadge,
   SidebarSeparator,
   SidebarInset,
+  SidebarTrigger,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { colors } from "@/data/nodeDefinitions";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Project } from "@/types";
-import MCPModal from '@/components/MCPModal';
-import { Plus, Search, CreditCard, UserCog, MoreHorizontal, File, Clock, Folder, Zap, Star, Circle, Diamond, Triangle, Hexagon, Square, Heart, Bookmark } from "lucide-react";
+import { Plus, Search, CreditCard, UserCog, MoreHorizontal, Folder, Zap, Star, Circle, Diamond, Triangle, Hexagon, Square, Heart, Bookmark, ArrowRight } from "lucide-react";
 import FolderTree from "./FolderTree";
 import Image from "next/image";
 import AccountSettings from "@/components/AccountSettings";
 import UserAvatar from "@/components/UserAvatar";
 import ProjectDetails from "./ProjectDetails";
+import { cn } from "@/lib/utils";
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -46,11 +45,33 @@ export default function ProjectDashboard({
   const [selectedFolder, setSelectedFolder] = useState<{id: string, name: string} | null>(null);
   const [folderProjects, setFolderProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [pinned, setPinned] = useState<string[]>([]);
+
+  // Load persisted pinned projects
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('pinned_projects');
+      if (stored) setPinned(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  const togglePin = (id: string) => {
+    setPinned((prev) => {
+      const next = prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id];
+      try { localStorage.setItem('pinned_projects', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const filteredProjects = projects.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Groupings
+  const pinnedProjects = filteredProjects.filter(p => pinned.includes(p.id));
+  const otherProjects = filteredProjects.filter(p => !pinned.includes(p.id));
+  const recentProjects = projects.filter(p => !pinned.includes(p.id)).slice(0, 3);
 
   const handleFolderSelect = async (folderId: string, folderName: string) => {
     try {
@@ -86,15 +107,26 @@ export default function ProjectDashboard({
     setSelectedProject(null);
   };
 
-  const statusColor = (status: Project["status"]) => {
+  // Token-based status colors using global CSS variables
+  const statusStyles = (status: Project["status"]) => {
     switch (status) {
       case "deployed":
-        return "bg-[#10b981]/20 text-[#10b981] border-[#10b981]/30";
+        return { base: 'var(--figma-success)' };
       case "testing":
-        return "bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30";
+        return { base: 'var(--figma-warning)' };
       default:
-        return "bg-[#6b7280]/20 text-[#6b7280] border-[#6b7280]/30";
+        return { base: 'hsl(var(--color-muted-foreground))' };
     }
+  };
+
+  const statusBadgeStyle = (status: Project["status"]): React.CSSProperties => {
+    const { base } = statusStyles(status);
+    return {
+      color: base,
+      // subtle tint backgrounds and borders using color-mix
+      backgroundColor: `color-mix(in hsl, ${base} 15%, transparent)`,
+      borderColor: `color-mix(in hsl, ${base} 30%, transparent)`
+    } as React.CSSProperties;
   };
 
   const getProjectIcon = (projectId: string) => {
@@ -142,8 +174,9 @@ export default function ProjectDashboard({
   return (
     <SidebarProvider defaultOpen>
 
-      <Sidebar className="border-r" style={{ borderColor: colors.border, '--sidebar-width': '14rem' } as React.CSSProperties}>
-                <SidebarContent className="p-1.5 flex flex-col gap-1">
+      <Sidebar collapsible="icon" className="border-r border-border" style={{ '--sidebar-width': '14rem' } as React.CSSProperties}>
+        <SidebarRail />
+        <SidebarContent className="p-1.5 flex flex-col gap-1">
           <SidebarMenu className="gap-0.5">
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" className="justify-start py-2 px-3 gap-2">
@@ -214,29 +247,46 @@ export default function ProjectDashboard({
         </SidebarContent>
       </Sidebar>
 
-      <SidebarInset className="border-b" style={{ borderColor: colors.border }}>
+      <SidebarInset className="border-b border-border">
         {/* ---- Header bar ---- */}
         <div className="flex items-center justify-between px-4 py-4">
           {activeSection === "projects" ? (
             <div className="flex items-center justify-between w-full">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full border-0 shadow-none focus:ring-0 focus:border-0"
-                  style={{ backgroundColor: colors.panel }}
-                />
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <SidebarTrigger />
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search projects..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-full border-0 shadow-none focus:ring-0 focus:border-0 bg-[hsl(var(--color-card))]"
+                  />
+                </div>
               </div>
-              <Button 
-                onClick={onCreateProject} 
-                variant="ghost" 
-                className="gap-2 hover:bg-white/5 ml-4"
-              >
-                <Plus className="w-4 h-4" />
-                New Project
-              </Button>
+              <div className="flex items-center ml-4">
+                <Button 
+                  onClick={onCreateProject} 
+                  variant="ghost" 
+                  className="gap-2 hover:bg-white/5"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Project
+                </Button>
+                <div className="ml-2">
+                  <Select onValueChange={(value) => { try { localStorage.setItem('selected_template', value); } catch {} onCreateProject(); }}>
+                    <SelectTrigger size="sm" className="bg-[hsl(var(--color-card))] border-0 shadow-none">
+                      <SelectValue placeholder="Template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blank">Blank</SelectItem>
+                      <SelectItem value="customer-support">Customer Support Bot</SelectItem>
+                      <SelectItem value="faq-agent">FAQ Agent</SelectItem>
+                      <SelectItem value="lead-qualifier">Lead Qualifier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           ) : (
             <h1 className="text-xl font-medium">Billing & Account</h1>
@@ -245,7 +295,8 @@ export default function ProjectDashboard({
 
                 {/* ---- Main content ---- */}
         {activeSection === "projects" ? (
-          selectedProject ? (
+          <>
+            {selectedProject ? (
             <div className="p-6">
               <ProjectDetails
                 project={selectedProject}
@@ -253,13 +304,13 @@ export default function ProjectDashboard({
                 onOpenCanvas={onOpenProject}
               />
             </div>
-          ) : selectedFolder ? (
+            ) : selectedFolder ? (
             <div className="p-4 space-y-8 overflow-y-auto max-h-[calc(100vh-80px)] custom-scrollbar">
               {/* Folder View Header */}
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={handleBackToAllProjects}
-                  className="flex items-center gap-2 text-white/60 hover:text-white/80 transition-colors"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -268,7 +319,7 @@ export default function ProjectDashboard({
                 </button>
               </div>
               <div className="space-y-4">
-                <h2 className="text-base font-light text-white/60">{selectedFolder.name} ({folderProjects.length} projects)</h2>
+                <h2 className="text-base font-light text-muted-foreground">{selectedFolder.name} ({folderProjects.length} projects)</h2>
                 <div className="space-y-3">
                   {folderProjects.map((project) => (
                     <button
@@ -288,17 +339,21 @@ export default function ProjectDashboard({
                           } as React.CSSProperties & { '--hover-gradient': string }}
                         >
                           {React.createElement(getProjectIcon(project.id), {
-                            className: "w-4 h-4 flex-shrink-0 text-white/80"
+                            className: "w-4 h-4 flex-shrink-0 text-foreground"
                           })}
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-base leading-[1.4] truncate">{project.name}</p>
-                          <p className="text-[13px] text-white/55 truncate">{project.description}</p>
+                          <p className="text-[13px] text-muted-foreground truncate">{project.description}</p>
                         </div>
                       </div>
                       
-                      <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-white/60">
-                        <Badge variant="outline" className={`border-0 text-xs px-1.5 py-0.5 opacity-60 ${statusColor(project.status)}`}>
+                      <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-muted-foreground">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs px-1.5 py-0.5`}
+                          style={statusBadgeStyle(project.status)}
+                        >
                           {project.status}
                         </Badge>
                         <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.nodeCount} nodes</span>
@@ -307,7 +362,7 @@ export default function ProjectDashboard({
                     </button>
                   ))}
                   {folderProjects.length === 0 && (
-                    <div className="text-center py-8 text-white/40">
+                    <div className="text-center py-8 text-muted-foreground opacity-70">
                       <Folder className="w-12 h-12 mx-auto mb-3 opacity-30" />
                       <p>No projects in this folder yet</p>
                       <p className="text-sm mt-1">Drag projects from the main view to add them here</p>
@@ -318,116 +373,170 @@ export default function ProjectDashboard({
             </div>
           ) : (
             <div className="p-4 space-y-8 overflow-y-auto max-h-[calc(100vh-80px)] custom-scrollbar">
-              {/* Recent Projects Section */}
-              <div className="space-y-4">
-                <h2 className="text-base font-light text-white/60">Recent Projects</h2>
-                <div className="space-y-3">
-                  {projects.slice(0, 3).map((project) => (
-                    <button
-                      key={project.id}
-                      onClick={() => setSelectedProject(project)}
-                      draggable
-                      onDragStart={() => {
-                        // Set drag data that FolderTree can access
-                        (window as any).draggedProjectId = project.id;
-                      }}
-                      onDragEnd={() => {
-                        (window as any).draggedProjectId = null;
-                      }}
-                      className="group w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-white/[0.02] transition-all text-left rounded-lg cursor-move"
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div 
-                          className="p-1.5 rounded-lg backdrop-blur-sm border border-white/10 mt-0.5 transition-all duration-200 group-hover:backdrop-blur-md group-hover:border-white/20"
-                          style={{ 
-                            background: getProjectGradient(project.id),
-                            '--hover-gradient': getProjectGradient(project.id).replace(/0\.(\d+)/g, (match, p1) => {
-                              const opacity = parseFloat('0.' + p1);
-                              return (opacity * 1.5).toFixed(2);
-                            })
-                          } as React.CSSProperties & { '--hover-gradient': string }}
-                        >
-                          {React.createElement(getProjectIcon(project.id), {
-                            className: "w-4 h-4 flex-shrink-0 text-white/80"
-                          })}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-base leading-[1.4] truncate">{project.name}</p>
-                          <p className="text-[13px] text-white/55 truncate">{project.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-white/60">
-                        <Badge variant="outline" className={`border-0 text-xs px-1.5 py-0.5 opacity-60 ${statusColor(project.status)}`}>
-                          {project.status}
-                        </Badge>
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.nodeCount} nodes</span>
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.lastModified.toLocaleDateString()}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              {/* Divider */}
-              <div className="border-t" style={{ borderColor: colors.border }}></div>
-
-              {/* All Projects Section */}
-              <div className="space-y-4">
-                <h2 className="text-base font-light text-white/60">All Projects</h2>
-                <div className="space-y-3">
-                  {filteredProjects.map((project) => (
-                    <button
-                      key={project.id}
-                      onClick={() => setSelectedProject(project)}
-                      draggable
-                      onDragStart={() => {
-                        // Set drag data that FolderTree can access
-                        (window as any).draggedProjectId = project.id;
-                      }}
-                      onDragEnd={() => {
-                        (window as any).draggedProjectId = null;
-                      }}
-                      className="group w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-white/[0.02] transition-all text-left rounded-lg cursor-move"
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div 
-                          className="p-1.5 rounded-lg backdrop-blur-sm border border-white/10 mt-0.5 transition-all duration-200 group-hover:backdrop-blur-md group-hover:border-white/20"
-                          style={{ 
-                            background: getProjectGradient(project.id),
-                            '--hover-gradient': getProjectGradient(project.id).replace(/0\.(\d+)/g, (match, p1) => {
-                              const opacity = parseFloat('0.' + p1);
-                              return (opacity * 1.5).toFixed(2);
-                            })
-                          } as React.CSSProperties & { '--hover-gradient': string }}
+            {/* Recent Projects Section */}
+            <div className="space-y-4">
+              <h2 className="text-base font-light text-muted-foreground">Recent Projects</h2>
+              <div className="space-y-3">
+                {recentProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => setSelectedProject(project)}
+                    draggable
+                    onDragStart={() => {
+                      (window as any).draggedProjectId = project.id;
+                    }}
+                    onDragEnd={() => {
+                      (window as any).draggedProjectId = null;
+                    }}
+                    className="group w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-white/[0.02] hover:ring-1 hover:ring-white/10 transition-all text-left rounded-lg cursor-move"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div 
+                        className="p-1.5 rounded-lg backdrop-blur-sm border border-white/10 mt-0.5 transition-all duration-200 group-hover:backdrop-blur-md group-hover:border-white/20"
+                        style={{ 
+                          background: getProjectGradient(project.id),
+                          '--hover-gradient': getProjectGradient(project.id).replace(/0\.(\d+)/g, (match, p1) => {
+                            const opacity = parseFloat('0.' + p1);
+                            return (opacity * 1.5).toFixed(2);
+                          })
+                        } as React.CSSProperties & { '--hover-gradient': string }}
+                      >
+                        {React.createElement(getProjectIcon(project.id), {
+                          className: "w-4 h-4 flex-shrink-0 text-white/80"
+                        })}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-base leading-[1.4] truncate">{project.name}</p>
+                        <p className="text-[13px] text-muted-foreground truncate">{project.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className={`text-xs px-1.5 py-0.5`}
+                        style={statusBadgeStyle(project.status)}
+                      >
+                        {project.status}
+                      </Badge>
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.nodeCount} nodes</span>
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.lastModified.toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        <button
+                          aria-label="Pin project"
+                          onClick={(e) => { e.stopPropagation(); togglePin(project.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
                         >
-                          {React.createElement(getProjectIcon(project.id), {
-                            className: "w-4 h-4 flex-shrink-0 text-white/80"
-                          })}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-base leading-[1.4] truncate">{project.name}</p>
-                          <p className="text-[13px] text-white/55 truncate">{project.description}</p>
-                        </div>
+                          <Star className={cn("w-4 h-4", pinned.includes(project.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                        </button>
+                        <button
+                          aria-label="Open project"
+                          onClick={(e) => { e.stopPropagation(); onOpenProject(project.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          aria-label="More actions"
+                          onClick={(e) => e.stopPropagation()}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
                       </div>
-                      
-                      <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-white/60">
-                        <Badge variant="outline" className={`border-0 text-xs px-1.5 py-0.5 opacity-60 ${statusColor(project.status)}`}>
-                          {project.status}
-                        </Badge>
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.nodeCount} nodes</span>
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.lastModified.toLocaleDateString()}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
-          )
+
+            {/* Divider */}
+            <div className="border-t border-border"></div>
+
+            {/* All Projects Section */}
+            <div className="space-y-4">
+              <h2 className="text-base font-light text-muted-foreground">All Projects</h2>
+              <div className="space-y-3">
+                {otherProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => setSelectedProject(project)}
+                    draggable
+                    onDragStart={() => {
+                      (window as any).draggedProjectId = project.id;
+                    }}
+                    onDragEnd={() => {
+                      (window as any).draggedProjectId = null;
+                    }}
+                    className="group w-full flex items-center justify-between gap-4 px-4 py-3 hover:bg-white/[0.02] hover:ring-1 hover:ring-white/10 transition-all text-left rounded-lg cursor-move"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div 
+                        className="p-1.5 rounded-lg backdrop-blur-sm border border-white/10 mt-0.5 transition-all duration-200 group-hover:backdrop-blur-md group-hover:border-white/20"
+                        style={{ 
+                          background: getProjectGradient(project.id),
+                          '--hover-gradient': getProjectGradient(project.id).replace(/0\.(\d+)/g, (match, p1) => {
+                            const opacity = parseFloat('0.' + p1);
+                            return (opacity * 1.5).toFixed(2);
+                          })
+                        } as React.CSSProperties & { '--hover-gradient': string }}
+                      >
+                        {React.createElement(getProjectIcon(project.id), {
+                          className: "w-4 h-4 flex-shrink-0 text-foreground"
+                        })}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-base leading-[1.4] truncate">{project.name}</p>
+                        <p className="text-[13px] text-muted-foreground truncate">{project.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="hidden md:flex items-center gap-3 flex-shrink-0 text-sm text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className={`text-xs px-1.5 py-0.5`}
+                        style={statusBadgeStyle(project.status)}
+                      >
+                        {project.status}
+                      </Badge>
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.nodeCount} nodes</span>
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">{project.lastModified.toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        <button
+                          aria-label="Pin project"
+                          onClick={(e) => { e.stopPropagation(); togglePin(project.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
+                        >
+                          <Star className={cn("w-4 h-4", pinned.includes(project.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}/>
+                        </button>
+                        <button
+                          aria-label="Open project"
+                          onClick={(e) => { e.stopPropagation(); onOpenProject(project.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          aria-label="More actions"
+                          onClick={(e) => e.stopPropagation()}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+            )}
+          </>
         ) : (
           <AccountSettings />
         )}
       </SidebarInset>
-    </SidebarProvider>
+  </SidebarProvider>
   );
 }

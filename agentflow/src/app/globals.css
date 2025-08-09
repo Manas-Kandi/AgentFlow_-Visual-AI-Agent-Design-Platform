@@ -21,11 +21,11 @@
   --color-accent: var(--color-accent-400);
   --color-accent-foreground: 0 0% 100%;
   /* Accent ramps */
-  --color-accent-100: 220 90% 95%;
-  --color-accent-200: 220 90% 85%;
-  --color-accent-300: 220 90% 75%;
-  --color-accent-400: 220 90% 65%;
-  --color-accent-500: 220 90% 55%;
+  --color-accent-100: 252 100% 92%;
+  --color-accent-200: 252 95% 85%;
+  --color-accent-300: 252 92% 75%;
+  --color-accent-400: 252 90% 67%;
+  --color-accent-500: 252 85% 60%;
   --color-destructive: 0 84.2% 60.2%;
   --color-destructive-foreground: 0 0% 98%;
   --color-border: 240 5.9% 90%;
@@ -122,11 +122,11 @@
   --color-accent: var(--color-accent-400);
   --color-accent-foreground: 240 10% 3.9%;
   /* Accent ramps */
-  --color-accent-100: 220 50% 20%;
-  --color-accent-200: 220 60% 30%;
-  --color-accent-300: 220 70% 40%;
-  --color-accent-400: 220 80% 50%;
-  --color-accent-500: 220 90% 60%;
+  --color-accent-100: 252 100% 92%;
+  --color-accent-200: 252 95% 85%;
+  --color-accent-300: 252 92% 75%;
+  --color-accent-400: 252 90% 67%;
+  --color-accent-500: 252 85% 60%;
   --color-destructive: 0 62.8% 30.6%;
   --color-destructive-foreground: 0 85.7% 97.3%;
   --color-border: 240 3.7% 15.9%;
@@ -162,11 +162,11 @@
      --color-muted-foreground: 240 5% 64.9%;
      --color-accent: var(--color-accent-400);
      --color-accent-foreground: 240 10% 3.9%;
-     --color-accent-100: 220 50% 20%;
-     --color-accent-200: 220 60% 30%;
-     --color-accent-300: 220 70% 40%;
-     --color-accent-400: 220 80% 50%;
-     --color-accent-500: 220 90% 60%;
+     --color-accent-100: 252 100% 92%;
+     --color-accent-200: 252 95% 85%;
+     --color-accent-300: 252 92% 75%;
+     --color-accent-400: 252 90% 67%;
+     --color-accent-500: 252 85% 60%;
      --color-destructive: 0 62.8% 30.6%;
      --color-destructive-foreground: 0 85.7% 97.3%;
      --color-border: 240 3.7% 15.9%;
@@ -197,20 +197,20 @@
 
 /* CRITICAL: Add the missing Figma variables that your components are expecting */
 :root {
-  /* Figma Design Variables - These were missing! */
-  --figma-bg: #0c0c0c;
-  --figma-surface: #1a1a1a;
-  --figma-surface-hover: #2a2a2a;
-  --figma-border: #333333;
-  --figma-border-strong: #404040;
-  --figma-text: #ffffff;
-  --figma-text-secondary: #b3b3b3;
-  --figma-text-tertiary: #808080;
-  --figma-accent: #18a0fb;
-  --figma-accent-hover: #1e96f0;
-  --figma-success: #1bc47d;
-  --figma-warning: #ffcd29;
-  --figma-danger: #f24822;
+  /* Figma tokens bridged to shadcn/Tailwind tokens */
+  --figma-bg: hsl(var(--color-background));
+  --figma-surface: hsl(var(--color-card));
+  --figma-surface-hover: hsl(var(--color-muted));
+  --figma-border: hsl(var(--color-border));
+  --figma-border-strong: hsl(var(--color-border));
+  --figma-text: hsl(var(--color-foreground));
+  --figma-text-secondary: hsl(var(--color-muted-foreground));
+  --figma-text-tertiary: hsl(var(--color-muted-foreground));
+  --figma-accent: hsl(var(--color-accent));
+  --figma-accent-hover: hsl(var(--color-accent-300));
+  --figma-success: hsl(151 55% 45%);
+  --figma-warning: hsl(45 100% 54%);
+  --figma-danger: hsl(2 85% 56%);
 
   /* Unified spacing system */
   --space-0: 0px;

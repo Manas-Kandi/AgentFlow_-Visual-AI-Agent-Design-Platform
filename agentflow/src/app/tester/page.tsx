@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import TesterV2 from "@/components/tester/TesterV2";
 

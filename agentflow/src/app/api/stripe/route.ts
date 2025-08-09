@@ -1,4 +1,4 @@
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabaseClient';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   const { price, quantity = 1, metadata = {} } = await req.json();
 
   try {
+    const stripe = getStripe();
     // For now, we'll use a hardcoded user. In a real application, you'd get this from your authentication system.
     const user = { id: 'user_placeholder_id', email: 'user@example.com' };
 
