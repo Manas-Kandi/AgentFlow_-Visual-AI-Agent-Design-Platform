@@ -10,6 +10,8 @@
     "mcp": "node src/lib/mcp/server.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/utilities": "^3.2.2",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-separator": "^1.1.7",
@@ -21,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "express": "^5.1.0",
+    "framer-motion": "^12.23.12",
     "get-port": "^7.1.0",
     "lucide-react": "^0.525.0",
     "next": "15.4.3",
@@ -28,7 +31,8 @@
     "react-dom": "19.1.0",
     "react-draggable": "^4.5.0",
     "stripe": "^18.4.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -1,0 +1,112 @@
+/* ===== Left Sidebar — Matte, Pastel, Premium Design System ===== */
+
+:root{
+  /* Color tokens - light theme */
+  --bg-app: #F7F8FB;           /* page background */
+  --bg-surface: #FFFFFF;       /* sidebar background */
+  --bg-alt: #FAFBFD;          /* alternate sections */
+  
+  /* Borders & Dividers */
+  --line-hair: #EEF1F6;       /* 1px hairline */
+  --line-muted: #E2E6EF;      /* stronger borders */
+  
+  /* Text */
+  --ink-primary: #0F172A;
+  --ink-secondary: #475569;
+  --ink-muted: #7C8798;
+  
+  /* Pastel accents */
+  --brand-primary: #3B82F6;
+  
+  /* Elevation & shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+  
+  /* Radius & spacing */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+}
+  
+  .dl-wrapper{
+    display:flex; height:100vh; overflow:hidden; background: transparent;
+  }
+  
+  /* Sidebar container */
+  .dl-sidebar{
+    position: relative;
+    width: 268px; min-width: 220px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--line-hair);
+    color: var(--ink-primary);
+    display:flex; flex-direction:column;
+    transition: width .28s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Remove aura effects */
+  .dl-aura,
+  .dl-sidebar::after {
+    display: none;
+  }
+  
+  .dl-sidebar.collapsed{ width: 64px; }
+  
+  /* Header */
+  .dl-sidebar.dl-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; 
+    font-size:16px; font-weight:700; color:var(--brand-primary);
+    border-bottom:1px solid var(--line-hair);
+  }
+  .dl-header .logo{ display:flex; align-items:center; gap:8px; }
+  .dl-header .toggle{
+    background:none; border:1px solid var(--line-hair);
+    color:var(--ink-secondary);
+    cursor:pointer; padding:4px; border-radius:var(--r-sm); transition:all 120ms ease;
+  }
+  .dl-header .toggle:hover{ 
+    background:var(--bg-alt);
+    color:var(--ink-primary);
+  }
+  
+  /* Sections */
+  .dl-section{ padding: 12px; }
+  .dl-section-header{
+    display:flex; align-items:center; justify-content:space-between;
+    color: var(--dl-fg-muted); font-weight:600; font-size:12px; text-transform: uppercase;
+    letter-spacing:.08em; margin-bottom: 8px;
+  }
+  .dl-icon-btn{
+    width:24px; height:24px; display:grid; place-items:center;
+    background: transparent; border: 1px solid var(--dl-border); color: var(--dl-fg);
+    border-radius: 8px; cursor: pointer; transition: background .16s ease, border-color .16s ease;
+  }
+  .dl-icon-btn:hover{
+    background: rgba(255,255,255,.06); border-color: var(--dl-border-strong);
+  }
+  
+  /* Scroll area where FolderTree renders */
+  .dl-scroll{
+    overflow: auto; max-height: calc(100vh - 220px);
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent;
+  }
+  .dl-scroll::-webkit-scrollbar{ width:6px; }
+  .dl-scroll::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius:999px; }
+  
+  /* Footer links */
+  .dl-bottom{ margin-top:auto; padding-top:12px; border-top:1px solid var(--dl-border); }
+  .dl-link{
+    background: none; border: none; color: var(--dl-fg-muted);
+    padding: 8px 4px; text-align:left; font-size:13px; cursor:pointer;
+    transition: color .14s ease, transform .14s ease;
+    width:100%;
+  }
+  .dl-link:hover{ color: var(--dl-fg); transform: translateX(2px); }
+  
+  /* Main content area (keeps the cinematic bg visible) */
+  .dl-main{ flex:1; overflow:auto; }
+  
