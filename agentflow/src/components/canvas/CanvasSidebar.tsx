@@ -1,30 +1,42 @@
 import React from "react";
+import { CanvasNode } from "@/types";
 import "./canvas.css";
 
 interface CanvasSidebarProps {
-  collapsed?: boolean;
-  onToggle?: () => void;
-  onInsert?: (type: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onNodeCreate: (node: CanvasNode) => void;
 }
 
-const TYPES = ["Agent", "Tool", "Router", "Memory", "Message", "Conversation"];
+export default function CanvasSidebar({ isOpen, onToggle, onNodeCreate }: CanvasSidebarProps) {
+  const handleAddNode = () => {
+    const newNode: CanvasNode = {
+      id: `node-${Date.now()}`,
+      type: "message",
+      subtype: "default",
+      position: { x: 100, y: 100 },
+      size: { width: 200, height: 100 },
+      data: { title: "New Node" },
+      inputs: [],
+      outputs: [],
+    };
+    onNodeCreate(newNode);
+  };
 
-export default function CanvasSidebar({ collapsed = false, onToggle, onInsert }: CanvasSidebarProps) {
   return (
-    <aside className={`af-sidebar ${collapsed ? "is-collapsed" : ""}`} aria-expanded={!collapsed}>
+    <aside className={`af-sidebar ${isOpen ? "" : "is-collapsed"}`} aria-expanded={isOpen}>
       <div className="af-sidebar-header">
-        <input className="af-input" placeholder="Search components…" aria-label="Search components" />
-        <button className="af-btn" onClick={onToggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          {collapsed ? ">" : "<"}
+        <button className="af-btn" onClick={onToggle} aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}>
+          {isOpen ? "<" : ">"}
         </button>
       </div>
-      <div className="af-sidebar-content">
-        {TYPES.map((t) => (
-          <button key={t} className="af-chip" onClick={() => onInsert?.(t)}>
-            {t}
+      {isOpen && (
+        <div className="af-sidebar-content">
+          <button className="af-chip" onClick={handleAddNode}>
+            Add Node
           </button>
-        ))}
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

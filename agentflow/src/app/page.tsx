@@ -4,14 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Project, CanvasNode, Connection, NodeType } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
-import DesignerLayout from "@/components/canvas/DesignerLayout";
-import TabBar from "@/components/canvas/TabBar";
-import { ComponentLibrary } from "@/components/canvas/ComponentLibrary";
-import DesignerCanvas from "@/components/canvas/DesignerCanvas";
-import PropertiesPanel from "@/components/canvas/PropertiesPanel";
+import Canvas from "@/components/canvas/Canvas";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
-import { TESTER_V2_ENABLED } from "@/lib/flags";
 
 const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -61,12 +56,7 @@ export default function AgentFlowPage() {
   );
   const [selectedNode, setSelectedNode] = useState<CanvasNode | null>(null);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [showTester, setShowTester] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [testFlowResult, setTestFlowResult] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
   const [history, setHistory] = useState<CanvasNode[][]>([]);
   const [future, setFuture] = useState<CanvasNode[][]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -559,23 +549,11 @@ export default function AgentFlowPage() {
   };
 
   const handleTestFlow = async () => {
-    // If Tester V2 is enabled, open the new modal and delegate run to it
-    if (TESTER_V2_ENABLED) {
-      setShowTester(true);
-      return;
-    }
-
-    // Legacy behavior (V1): run immediately and show side results panel
     setIsTesting(true);
-    setTestFlowResult(null);
     try {
-      const result = await runWorkflow(nodes, connections, startNodeId);
-      setTestFlowResult(result);
+      await runWorkflow(nodes, connections, startNodeId);
     } catch (err) {
       console.error("Error running workflow:", err);
-      setTestFlowResult({
-        error: err instanceof Error ? err.message : "Unknown error",
-      });
     } finally {
       setIsTesting(false);
     }
@@ -723,103 +701,79 @@ export default function AgentFlowPage() {
 
   return (
     <>
-      <TabBar onTest={handleTestFlow} testButtonDisabled={isTesting} />
-      <DesignerLayout
-        left={
-          <ComponentLibrary
-            onAddNode={handleAddNode}
-            onBackToProjects={() => setCurrentView("projects")}
-          />
-        }
-        center={
-          <DesignerCanvas
-            nodes={nodes}
-            connections={connections}
-            selectedNode={selectedNode}
-            onNodeSelect={setSelectedNode}
-            onNodeUpdate={handleNodeUpdate}
-            onConnectionsChange={setConnections}
-            onCreateConnection={async (connectionData) => {
-              if (!currentProject) return;
-              try {
-                const res = await fetch(
-                  `/api/projects/${currentProject.id}/connections`,
-                  {
-                    method: "POST",
-                    headers: await buildHeaders(true),
-                    body: JSON.stringify({
-                      id: connectionData.id,
-                      project_id: currentProject.id,
-                      source_node: connectionData.sourceNode,
-                      source_output: connectionData.sourceOutput,
-                      target_node: connectionData.targetNode,
-                      target_input: connectionData.targetInput,
-                    }),
-                  }
-                );
-                if (!res.ok) throw new Error("Failed to create connection");
-                await fetchConnections(currentProject.id);
-              } catch (error) {
-                console.error("Error creating connection:", error);
+      <Canvas
+        nodes={nodes}
+        connections={connections}
+        selectedNode={selectedNode}
+        onNodeSelect={setSelectedNode}
+        onNodeUpdate={handleNodeUpdate}
+        onConnectionsChange={setConnections}
+        onCreateConnection={async (connectionData) => {
+          if (!currentProject) return;
+          try {
+            const res = await fetch(
+              `/api/projects/${currentProject.id}/connections`,
+              {
+                method: "POST",
+                headers: await buildHeaders(true),
+                body: JSON.stringify({
+                  id: connectionData.id,
+                  project_id: currentProject.id,
+                  source_node: connectionData.sourceNode,
+                  source_output: connectionData.sourceOutput,
+                  target_node: connectionData.targetNode,
+                  target_input: connectionData.targetInput,
+                }),
               }
-            }}
-            onTestFlow={handleTestFlow}
-            showTester={showTester}
-            testFlowResult={testFlowResult}
-            setShowTester={setShowTester}
-            setTestFlowResult={setTestFlowResult}
-            testButtonDisabled={isTesting}
-            startNodeId={startNodeId}
-            onStartNodeChange={setStartNodeId}
-            onDeleteNode={handleDeleteNode}
-            onNodeCreate={async (newNode) => {
-              if (!currentProject) return;
+            );
+            if (!res.ok) throw new Error("Failed to create connection");
+            await fetchConnections(currentProject.id);
+          } catch (error) {
+            console.error("Error creating connection:", error);
+          }
+        }}
+        onNodeDelete={handleDeleteNode}
+        onNodeCreate={async (newNode) => {
+          if (!currentProject) return;
 
-              try {
-                // Build a normalized data object in a type-safe way
-                const d = (newNode.data ?? {}) as Record<string, any>;
-                const newNodeData = {
-                  id: newNode.subtype,
-                  name: d.title || "New Node",
-                  type: newNode.type,
-                  subtype: newNode.subtype,
-                  color: d.color || "#0066cc",
-                  icon: d.icon || "default",
-                  description: d.description || "",
-                  defaultInputs: newNode.inputs,
-                  defaultOutputs: newNode.outputs,
-                  systemPrompt: d.systemPrompt || "",
-                  personality: d.personality || "",
-                  escalationLogic: d.escalationLogic || "",
-                  confidenceThreshold: d.confidenceThreshold || 0.7,
-                  model: d.model || "gemini-pro",
-                  prompt: d.prompt || "",
-                  template: d.template || "",
-                  variables: d.variables || {},
-                  content: d.content || "",
-                  messageType: d.messageType || "user",
-                  toolConfig: d.toolConfig || {
-                    toolType: "web-search",
-                    parameters: {},
-                  },
-                };
+          try {
+            const d = (newNode.data ?? {}) as Record<string, any>;
+            const newNodeData = {
+              id: newNode.subtype,
+              name: d.title || "New Node",
+              type: newNode.type,
+              subtype: newNode.subtype,
+              color: d.color || "#0066cc",
+              icon: d.icon || "default",
+              description: d.description || "",
+              defaultInputs: newNode.inputs,
+              defaultOutputs: newNode.outputs,
+              systemPrompt: d.systemPrompt || "",
+              personality: d.personality || "",
+              escalationLogic: d.escalationLogic || "",
+              confidenceThreshold: d.confidenceThreshold || 0.7,
+              model: d.model || "gemini-pro",
+              prompt: d.prompt || "",
+              template: d.template || "",
+              variables: d.variables || {},
+              content: d.content || "",
+              messageType: d.messageType || "user",
+              toolConfig: d.toolConfig || {
+                toolType: "web-search",
+                parameters: {},
+              },
+            };
 
-                await handleAddNode(newNodeData);
-              } catch (error) {
-                console.error("Error creating node from drag:", error);
-              }
-            }}
-          />
-        }
-        right={
-          <PropertiesPanel
-            selectedNode={selectedNode}
-            onChange={handleNodeUpdate}
-            nodes={nodes}
-            connections={connections}
-            onConnectionsChange={setConnections}
-          />
-        }
+            await handleAddNode(newNodeData);
+          } catch (error) {
+            console.error("Error creating node from drag:", error);
+          }
+        }}
+        startNodeId={startNodeId}
+        onStartNodeChange={setStartNodeId}
+        onTestFlow={handleTestFlow}
+        isTesting={isTesting}
+        currentProject={currentProject}
       />
       {statusMessage && (
         <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-1 rounded shadow">
