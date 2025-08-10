@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@/lib/env";
 
 // Prefer server-only env vars if present; fallback to NEXT_PUBLIC_* for now
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || process.env.NEXT_PUBLIC_NVIDIA_API_KEY;
-const RAW_BASE = process.env.NVIDIA_BASE_URL || process.env.NEXT_PUBLIC_NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
+const NVIDIA_API_KEY = env.NVIDIA_API_KEY || env.NEXT_PUBLIC_NVIDIA_API_KEY;
+const RAW_BASE =
+  env.NVIDIA_BASE_URL || env.NEXT_PUBLIC_NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
 // Normalize base URL to ensure it includes /v1
 function normalizeBase(url: string): string {
   const trimmed = url.replace(/\/$/, "");
