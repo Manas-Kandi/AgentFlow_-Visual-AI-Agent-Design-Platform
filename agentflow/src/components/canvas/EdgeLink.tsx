@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Connection } from "@/types";
-import "./canvas.css";
+import "./Canvas.css";
 
 interface EdgeLinkProps {
   edge: Connection;

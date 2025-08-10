@@ -1,10 +1,11 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Project, CanvasNode, Connection, NodeType } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
-import Canvas from "@/components/canvas/Canvas";
+import CanvasShell from "@/components/canvas/CanvasShell";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
 
@@ -701,7 +702,7 @@ export default function AgentFlowPage() {
 
   return (
     <>
-      <Canvas
+      <CanvasShell
         nodes={nodes}
         connections={connections}
         selectedNode={selectedNode}
@@ -773,7 +774,7 @@ export default function AgentFlowPage() {
         onStartNodeChange={setStartNodeId}
         onTestFlow={handleTestFlow}
         isTesting={isTesting}
-        currentProject={currentProject}
+        projectTitle={currentProject?.name || "Untitled Project"}
       />
       {statusMessage && (
         <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-1 rounded shadow">

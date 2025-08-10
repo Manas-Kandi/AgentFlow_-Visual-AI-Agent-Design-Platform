@@ -1,5 +1,5 @@
 import React from "react";
-import "./canvas.css";
+import "./Canvas.css";
 
 export interface ModelBadgeProps {
   mode: "hosted" | "byok";

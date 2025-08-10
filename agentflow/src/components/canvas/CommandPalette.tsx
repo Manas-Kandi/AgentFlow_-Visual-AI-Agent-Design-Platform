@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./canvas.css";
+import "./Canvas.css";
 
 interface CommandPaletteProps {
   open: boolean;

@@ -1,14 +1,14 @@
 import React from "react";
+import "./Canvas.css";
 import { CanvasNode } from "@/types";
-import "./canvas.css";
 
-interface CanvasSidebarProps {
+interface LeftPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   onNodeCreate: (node: CanvasNode) => void;
 }
 
-export default function CanvasSidebar({ isOpen, onToggle, onNodeCreate }: CanvasSidebarProps) {
+export default function LeftPanel({ isOpen, onToggle, onNodeCreate }: LeftPanelProps) {
   const handleAddNode = () => {
     const newNode: CanvasNode = {
       id: `node-${Date.now()}`,
@@ -24,15 +24,15 @@ export default function CanvasSidebar({ isOpen, onToggle, onNodeCreate }: Canvas
   };
 
   return (
-    <aside className={`af-sidebar ${isOpen ? "" : "is-collapsed"}`} aria-expanded={isOpen}>
-      <div className="af-sidebar-header">
+    <aside className="af-leftpanel" style={{ width: isOpen ? 280 : 56 }}>
+      <div className="p-2">
         <button className="af-btn" onClick={onToggle} aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}>
           {isOpen ? "<" : ">"}
         </button>
       </div>
       {isOpen && (
-        <div className="af-sidebar-content">
-          <button className="af-chip" onClick={handleAddNode}>
+        <div className="p-2 flex flex-col gap-2">
+          <button className="af-btn" onClick={handleAddNode}>
             Add Node
           </button>
         </div>
