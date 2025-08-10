@@ -4,6 +4,7 @@ import { CanvasNode, Connection } from "@/types";
 import { theme } from "@/data/theme";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import ChatBoxNode from "@/components/nodes/ChatBoxNode";
+import logger from "@/lib/logger";
 
 const canvasStyle: React.CSSProperties = {
   backgroundColor: "#0D0D0D", // pure dark
@@ -267,23 +268,23 @@ export default function CanvasEngine(props: Props) {
       portIndex: number
     ) => {
       e.stopPropagation();
-      console.log("handlePortMouseDown called:", {
+      logger.debug("handlePortMouseDown called:", {
         nodeId,
         outputId,
         portIndex,
       });
       if (isPanning) {
-        console.log("Ignoring port click during panning");
+        logger.debug("Ignoring port click during panning");
         return;
       }
       const portPos = getPortPosition(nodeId, "output", portIndex);
       const canvasPos = screenToCanvas(e.clientX, e.clientY);
-      console.log("Port position:", portPos, "Canvas position:", canvasPos);
+      logger.debug("Port position:", portPos, "Canvas position:", canvasPos);
       setDragConnection({
         from: { nodeId, outputId, pos: portPos },
         currentPos: canvasPos,
       });
-      console.log("Drag connection set successfully");
+      logger.debug("Drag connection set successfully");
     },
     [getPortPosition, screenToCanvas, isPanning]
   );
@@ -291,14 +292,14 @@ export default function CanvasEngine(props: Props) {
   const handlePortMouseUp = useCallback(
     async (e: React.MouseEvent, nodeId: string, inputId: string) => {
       e.stopPropagation();
-      console.log("handlePortMouseUp called:", {
+      logger.debug("handlePortMouseUp called:", {
         nodeId,
         inputId,
         dragConnection,
       });
       if (dragConnection) {
         if (dragConnection.from.nodeId === nodeId) {
-          console.log("Cannot connect to the same node");
+          logger.debug("Cannot connect to the same node");
           setDragConnection(null);
           return;
         }
@@ -313,49 +314,49 @@ export default function CanvasEngine(props: Props) {
             targetNode: nodeId,
             targetInput: inputId,
           };
-          console.log("Creating connection:", connectionData);
+          logger.debug("Creating connection:", connectionData);
           // Validate connection locally before applying
           const src = nodes.find((n) => n.id === connectionData.sourceNode);
           const tgt = nodes.find((n) => n.id === connectionData.targetNode);
           const srcPort = src?.outputs?.find((p) => p.id === connectionData.sourceOutput);
           const tgtPort = tgt?.inputs?.find((p) => p.id === connectionData.targetInput);
           if (!src || !tgt || !srcPort || !tgtPort) {
-            console.warn(
+            logger.error(
               `Invalid connection: missing node/port. src=${src?.id ?? 'N/A'} srcPort=${srcPort?.id ?? 'N/A'} tgt=${tgt?.id ?? 'N/A'} tgtPort=${tgtPort?.id ?? 'N/A'}`
             );
             setDragConnection(null);
             return;
           }
           if (srcPort.type && tgtPort.type && srcPort.type !== tgtPort.type) {
-            console.warn(
+            logger.error(
               `Type mismatch: ${src.id}.${srcPort.id}:${srcPort.type} -> ${tgt.id}.${tgtPort.id}:${tgtPort.type}`
             );
             setDragConnection(null);
             return;
           }
           // IMMEDIATE UPDATE: Add to local connections first for instant visual feedback
-          console.log(
+          logger.debug(
             "Adding connection immediately to props.onConnectionsChange"
           );
           onConnectionsChange([...connections, connectionData]);
           // Then try to save to database
           try {
             await onCreateConnection(connectionData);
-            console.log("Connection saved to database successfully!");
+            logger.debug("Connection saved to database successfully!");
           } catch (dbError) {
-            console.error(
+            logger.error(
               "Failed to save to database, but connection shown locally:",
               dbError
             );
             // Connection is already visible, so this is ok for now
           }
         } catch (error) {
-          console.error("Failed to create connection:", error);
+          logger.error("Failed to create connection:", error);
         } finally {
           setDragConnection(null);
         }
       } else {
-        console.log("No drag connection active");
+        logger.debug("No drag connection active");
       }
     },
     [dragConnection, onCreateConnection, onConnectionsChange, connections]
@@ -520,7 +521,7 @@ export default function CanvasEngine(props: Props) {
 
   // Debug logging
   useEffect(() => {
-    console.log("Canvas state:", {
+    logger.debug("Canvas state:", {
       nodes: nodes.length,
       connections: connections.length,
       dragConnection,
@@ -529,10 +530,10 @@ export default function CanvasEngine(props: Props) {
   }, [nodes.length, connections.length, dragConnection, viewportTransform]);
 
   useEffect(() => {
-    console.log("Canvas received connections:", connections);
-    console.log("Connections count:", connections.length);
+    logger.debug("Canvas received connections:", connections);
+    logger.debug("Connections count:", connections.length);
     if (connections.length > 0) {
-      console.log("Connection details:", connections);
+      logger.debug("Connection details:", connections);
     }
   }, [connections]);
 
@@ -793,7 +794,7 @@ export default function CanvasEngine(props: Props) {
                     zIndex: 20,
                   }}
                   onMouseUp={(e) => {
-                    console.log(
+                    logger.debug(
                       "Input port mouse up triggered!",
                       node.id,
                       input.id
@@ -801,7 +802,7 @@ export default function CanvasEngine(props: Props) {
                     handlePortMouseUp(e, node.id, input.id);
                   }}
                   onMouseEnter={() =>
-                    console.log("Hovering input port:", input.id)
+                    logger.debug("Hovering input port:", input.id)
                   }
                   title={input.label}
                 >
@@ -840,7 +841,7 @@ export default function CanvasEngine(props: Props) {
                     zIndex: 20,
                   }}
                   onMouseDown={(e) => {
-                    console.log(
+                    logger.debug(
                       "Output port mouse down triggered!",
                       node.id,
                       output.id,
@@ -849,7 +850,7 @@ export default function CanvasEngine(props: Props) {
                     handlePortMouseDown(e, node.id, output.id, index);
                   }}
                   onMouseEnter={() =>
-                    console.log("Hovering output port:", output.id)
+                    logger.debug("Hovering output port:", output.id)
                   }
                   title={output.label}
                 >

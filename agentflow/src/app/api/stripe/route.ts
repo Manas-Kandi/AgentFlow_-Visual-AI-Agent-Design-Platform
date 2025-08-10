@@ -2,6 +2,7 @@ import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabaseClient';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 
 const getURL = () => {
   let url =
@@ -57,9 +58,9 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ sessionId: session.id });
-  } catch (err: any) {
-    console.log(err);
-    return new NextResponse('Error creating checkout session', { status: 500 });
-  }
+    } catch (err: any) {
+      logger.error(err);
+      return new NextResponse('Error creating checkout session', { status: 500 });
+    }
 }
 

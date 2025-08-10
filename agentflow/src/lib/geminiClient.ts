@@ -1,4 +1,6 @@
 // Gemini API utility for workflow execution (v1beta)
+import logger from "./logger";
+
 export async function callGemini(prompt: string, params: Record<string, unknown> = {}) {
   const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
@@ -29,9 +31,8 @@ export async function callGemini(prompt: string, params: Record<string, unknown>
   if (typeof window !== "undefined" && window?.localStorage) {
     window.localStorage.setItem("__gemini_debug_body__", JSON.stringify(body, null, 2));
   }
-  // Also log to console (Node or browser)
-  // eslint-disable-next-line no-console
-  console.log("[Gemini Debug] Outgoing Gemini payload:", body);
+  // Also log in debug mode (Node or browser)
+  logger.debug("[Gemini Debug] Outgoing Gemini payload:", body);
 
 
   const res = await fetch(`${url}?key=${GEMINI_API_KEY}`, {

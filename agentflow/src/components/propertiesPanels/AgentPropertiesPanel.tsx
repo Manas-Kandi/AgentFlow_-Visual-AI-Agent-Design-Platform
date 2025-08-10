@@ -21,6 +21,7 @@ import {
   VSCodeSelect,
   VSCodeButton,
 } from "./vsCodeFormComponents";
+import logger from "@/lib/logger";
 
 interface AgentNodeData {
   name?: string;
@@ -345,7 +346,7 @@ export default function AgentPropertiesPanel({
               size="small"
               onClick={() => {
                 // Trigger agent test
-                console.log("Testing agent with current configuration...");
+                logger.debug("Testing agent with current configuration...");
               }}
             >
               Test Agent
@@ -406,7 +407,7 @@ export default function AgentPropertiesPanel({
             style={{ width: "100%" }}
             onClick={() => {
               // Open chat preview
-              console.log("Opening chat preview...");
+              logger.debug("Opening chat preview...");
             }}
           >
             <MessageSquare

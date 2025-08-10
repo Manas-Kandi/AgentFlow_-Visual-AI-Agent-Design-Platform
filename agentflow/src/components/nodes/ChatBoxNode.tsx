@@ -5,6 +5,7 @@ import {
   selectedNodeStyle,
   hoverNodeStyle
 } from './nodeStyles';
+import logger from '@/lib/logger';
 
 interface ChatBoxNodeProps {
   node: CanvasNode;
@@ -56,16 +57,16 @@ export default function ChatBoxNode(props: ChatBoxNodeProps) {
 
   // Update node data when input changes
   const handleInputChange = (value: string) => {
-    console.log('Input changed to:', value); // Add this
+      logger.debug('Input changed to:', value);
     setInput(value);
     const updatedNode = {
       ...node,
       data: { ...node.data, inputValue: value }
     };
-    console.log('Updated node data:', updatedNode.data); // Add this
-    console.log('Calling onNodeUpdate...'); // Debug log
-    onNodeUpdate(updatedNode);
-    console.log('onNodeUpdate called'); // Debug log
+      logger.debug('Updated node data:', updatedNode.data);
+      logger.debug('Calling onNodeUpdate...');
+      onNodeUpdate(updatedNode);
+      logger.debug('onNodeUpdate called');
   };
 
   const nodeStyle: React.CSSProperties = {
