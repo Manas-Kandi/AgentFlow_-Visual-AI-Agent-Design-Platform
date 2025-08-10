@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Project, CanvasNode, Connection, NodeType } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import ProjectDashboard from "@/components/dashboard/ProjectDashboard";
-import DesignerLayout from "@/components/panels/DesignerLayout";
-import TabBar from "@/components/panels/TabBar";
-import { ComponentLibrary } from "@/components/panels/ComponentLibrary";
+import DesignerLayout from "@/components/canvas/DesignerLayout";
+import TabBar from "@/components/canvas/TabBar";
+import { ComponentLibrary } from "@/components/canvas/ComponentLibrary";
 import DesignerCanvas from "@/components/canvas/DesignerCanvas";
-import PropertiesPanel from "@/components/panels/PropertiesPanel";
+import PropertiesPanel from "@/components/canvas/PropertiesPanel";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
 import { TESTER_V2_ENABLED } from "@/lib/flags";
@@ -16,7 +16,9 @@ import { TESTER_V2_ENABLED } from "@/lib/flags";
 const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 // Helper: attach auth token from Supabase session
-async function buildHeaders(json: boolean = true): Promise<Record<string, string>> {
+async function buildHeaders(
+  json: boolean = true
+): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
   if (json) headers["Content-Type"] = "application/json";
   try {
@@ -119,7 +121,9 @@ export default function AgentFlowPage() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch("/api/projects", { headers: await buildHeaders(false) });
+      const res = await fetch("/api/projects", {
+        headers: await buildHeaders(false),
+      });
       const ct = res.headers.get("content-type") || "";
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
@@ -127,17 +131,22 @@ export default function AgentFlowPage() {
         console.error("Error fetching projects:", payload);
         return;
       }
-      const transformedProjects: Project[] = (payload || []).map((project: Project) => ({
-        id: project.id,
-        name: project.name || "Untitled Project",
-        description: project.description || "",
-        lastModified: project.created_at ? new Date(project.created_at) : new Date(),
-        nodeCount: 0,
-        status: project.status || "draft",
-        startNodeId: project.start_node_id || null,
-        created_at: project.created_at || new Date().toISOString(),
-        user_id: project.user_id || DEFAULT_USER_ID,
-      }));
+      const transformedProjects: Project[] = (payload || []).map(
+        (project: Project) => ({
+          id: project.id,
+          name: project.name || "Untitled Project",
+          description: project.description || "",
+          lastModified: project.created_at
+            ? new Date(project.created_at)
+            : new Date(),
+          nodeCount: 0,
+          status: project.status || "draft",
+          // Support both snake_case from DB and camelCase in local types
+          startNodeId: (project as any).start_node_id ?? (project as any).startNodeId ?? null,
+          created_at: project.created_at || new Date().toISOString(),
+          user_id: project.user_id || DEFAULT_USER_ID,
+        })
+      );
       setProjects(transformedProjects);
     } catch (err) {
       console.error("Unexpected error fetching projects:", err);
@@ -146,9 +155,12 @@ export default function AgentFlowPage() {
 
   const fetchNodes = async (projectId: string) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/nodes?project_id=${projectId}`, {
-        headers: await buildHeaders(false),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/nodes?project_id=${projectId}`,
+        {
+          headers: await buildHeaders(false),
+        }
+      );
       const ct = res.headers.get("content-type") || "";
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
@@ -156,19 +168,21 @@ export default function AgentFlowPage() {
         console.error("Error fetching nodes:", payload);
         return;
       }
-      const transformedNodes: CanvasNode[] = (payload || []).map((node: CanvasNode) => ({
-        id: node.id,
-        type: node.type,
-        subtype: node.subtype || "",
-        position: node.position || { x: 100, y: 100 },
-        size: node.size || { width: 200, height: 100 },
-        data: node.data || {
-          label: "New Node",
-          config: {}
-        },
-        inputs: node.inputs || [{ id: "input-1", label: "Input" }],
-        outputs: node.outputs || [{ id: "output-1", label: "Output" }],
-      }));
+      const transformedNodes: CanvasNode[] = (payload || []).map(
+        (node: CanvasNode) => ({
+          id: node.id,
+          type: node.type,
+          subtype: node.subtype || "",
+          position: node.position || { x: 100, y: 100 },
+          size: node.size || { width: 200, height: 100 },
+          data: node.data || {
+            label: "New Node",
+            config: {},
+          },
+          inputs: node.inputs || [{ id: "input-1", label: "Input" }],
+          outputs: node.outputs || [{ id: "output-1", label: "Output" }],
+        })
+      );
 
       setNodes(transformedNodes);
     } catch (err) {
@@ -178,9 +192,12 @@ export default function AgentFlowPage() {
 
   const fetchConnections = async (projectId: string) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/connections?project_id=${projectId}`, {
-        headers: await buildHeaders(false),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/connections?project_id=${projectId}`,
+        {
+          headers: await buildHeaders(false),
+        }
+      );
       const ct = res.headers.get("content-type") || "";
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
@@ -188,13 +205,15 @@ export default function AgentFlowPage() {
         console.error("Error fetching connections:", payload);
         return;
       }
-      const transformedConnections: Connection[] = (payload || []).map((conn) => ({
-        id: conn.id,
-        sourceNode: conn.source_node,
-        sourceOutput: conn.source_output,
-        targetNode: conn.target_node,
-        targetInput: conn.target_input,
-      }));
+      const transformedConnections: Connection[] = (payload || []).map(
+        (conn: any) => ({
+          id: conn.id,
+          sourceNode: conn.source_node,
+          sourceOutput: conn.source_output,
+          targetNode: conn.target_node,
+          targetInput: conn.target_input,
+        })
+      );
 
       setConnections(transformedConnections);
     } catch (err) {
@@ -218,7 +237,9 @@ export default function AgentFlowPage() {
       }
       setCurrentProject({ ...currentProject, startNodeId: nodeId });
       setProjects((prev) =>
-        prev.map((p) => (p.id === currentProject.id ? { ...p, startNodeId: nodeId } : p))
+        prev.map((p) =>
+          p.id === currentProject.id ? { ...p, startNodeId: nodeId } : p
+        )
       );
     } catch (err) {
       console.error("Unexpected error updating start node:", err);
@@ -231,37 +252,47 @@ export default function AgentFlowPage() {
     try {
       // Log environment check
       console.log("Checking Supabase connection...");
-      console.log("Supabase URL exists:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log("Supabase Anon Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      console.log(
+        "Supabase URL exists:",
+        !!process.env.NEXT_PUBLIC_SUPABASE_URL
+      );
+      console.log(
+        "Supabase Anon Key exists:",
+        !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      );
 
       // Log input data
       console.log("Creating project with data:", {
         name: projectData.name,
         description: projectData.description,
-        status: projectData.status
+        status: projectData.status,
       });
-      
+
       // Prepare minimal project data
       const newProjectData = {
-        name: projectData.name || 'Untitled Project',
-        description: projectData.description || '',
-        status: 'draft',
-        user_id: DEFAULT_USER_ID
+        name: projectData.name || "Untitled Project",
+        description: projectData.description || "",
+        status: "draft",
+        user_id: DEFAULT_USER_ID,
       };
 
       console.log("Attempting to insert project with data:", newProjectData);
 
-      const res = await fetch('/api/projects', {
-        method: 'POST',
+      const res = await fetch("/api/projects", {
+        method: "POST",
         headers: await buildHeaders(true),
-        body: JSON.stringify(newProjectData)
+        body: JSON.stringify(newProjectData),
       });
-      const ct = res.headers.get('content-type') || '';
-      const isJson = ct.includes('application/json');
+      const ct = res.headers.get("content-type") || "";
+      const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => null) : null;
       if (!res.ok || !payload) {
-        console.error('Project create failed:', payload);
-        setStatusMessage(`Failed to create project: ${!res.ok ? res.status : 'No data returned'}`);
+        console.error("Project create failed:", payload);
+        setStatusMessage(
+          `Failed to create project: ${
+            !res.ok ? res.status : "No data returned"
+          }`
+        );
         return;
       }
 
@@ -269,7 +300,9 @@ export default function AgentFlowPage() {
         id: payload.id,
         name: payload.name,
         description: payload.description || "",
-        lastModified: payload.created_at ? new Date(payload.created_at) : new Date(),
+        lastModified: payload.created_at
+          ? new Date(payload.created_at)
+          : new Date(),
         nodeCount: 0,
         status: payload.status || "draft",
         startNodeId: payload.start_node_id || null,
@@ -284,7 +317,7 @@ export default function AgentFlowPage() {
       setNodes([]);
       setConnections([]);
       setCurrentView("designer");
-      
+
       // Show success message
       setStatusMessage("Project created successfully");
     } catch (err) {
@@ -296,17 +329,16 @@ export default function AgentFlowPage() {
   const handleOpenProject = async (projectId: string) => {
     const project = projects.find((p) => p.id === projectId) || null;
     setCurrentProject(project);
-    setCurrentView("designer");
     if (project) {
       setStartNodeId(project.startNodeId || null);
       await fetchNodes(projectId);
       await fetchConnections(projectId);
     }
+    // Show designer only after initial data is loaded to avoid race conditions
+    setCurrentView("designer");
   };
 
   const handleAddNode = async (nodeData: NodeType) => {
-    if (!currentProject) return;
-
     try {
       const nodeCount = nodes.length;
       const baseX = 200 + (nodeCount % 3) * 250;
@@ -331,6 +363,12 @@ export default function AgentFlowPage() {
       const title = nodeDef?.name || nodeData.name || "Untitled Node";
       const subtype =
         nodeDef?.subtype || nodeData.subtype || nodeDef?.id || nodeData.id;
+
+      // Generate a single UUID to use both locally and in the database
+      const uuid =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${subtype}-${Date.now()}`;
 
       // Build proper data structure based on node type
       let nodeSpecificData: Record<string, unknown> = {
@@ -375,9 +413,7 @@ export default function AgentFlowPage() {
       }
 
       const newNode: CanvasNode = {
-        id: typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${subtype}-${Date.now()}`,
+        id: uuid,
         type: nodeDef?.type || nodeData.type || "conversation",
         subtype: subtype,
         position: { x: baseX, y: baseY },
@@ -387,32 +423,38 @@ export default function AgentFlowPage() {
         outputs: defaultOutputs,
       };
 
-      // Persist via API
-      try {
-        const res = await fetch(`/api/projects/${currentProject.id}/nodes`, {
-          method: 'POST',
-          headers: await buildHeaders(true),
-          body: JSON.stringify({
-            id: newNode.id,
-            project_id: currentProject.id,
-            type: newNode.type,
-            subtype: newNode.subtype,
-            position: newNode.position,
-            size: newNode.size,
-            data: newNode.data,
-            inputs: newNode.inputs,
-            outputs: newNode.outputs,
-          })
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          console.error('Error saving new node:', t);
-        }
-      } catch (dbErr) {
-        console.error("Error saving new node:", dbErr);
-      }
+      // Optimistic update: add to local state immediately
+      setNodes((prev) => [...prev, newNode]);
 
-      setNodes([...nodes, newNode]);
+      // Persist via API if a project is open; otherwise, keep it local-only
+      if (currentProject) {
+        try {
+          const res = await fetch(`/api/projects/${currentProject.id}/nodes`, {
+            method: "POST",
+            headers: await buildHeaders(true),
+            body: JSON.stringify({
+              id: uuid,
+              project_id: currentProject.id,
+              type: newNode.type,
+              subtype: newNode.subtype,
+              position: newNode.position,
+              size: newNode.size,
+              data: newNode.data,
+              inputs: newNode.inputs,
+              outputs: newNode.outputs,
+            }),
+          });
+          if (!res.ok) {
+            const t = await res.text();
+            console.error("Error saving new node:", t);
+          } else {
+            // Refresh from DB to ensure consistency
+            await fetchNodes(currentProject.id);
+          }
+        } catch (dbErr) {
+          console.error("Error saving new node:", dbErr);
+        }
+      }
     } catch (err) {
       console.error("Error adding node:", err);
     }
@@ -428,7 +470,7 @@ export default function AgentFlowPage() {
     if (currentProject) {
       try {
         const res = await fetch(`/api/projects/${currentProject.id}/nodes`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: await buildHeaders(true),
           body: JSON.stringify({
             id: updatedNode.id,
@@ -440,14 +482,78 @@ export default function AgentFlowPage() {
             data: updatedNode.data,
             inputs: updatedNode.inputs,
             outputs: updatedNode.outputs,
-          })
+          }),
         });
         if (!res.ok) {
           const t = await res.text();
-          console.error('Error updating node:', t);
+          console.error("Error updating node:", t);
         }
       } catch (dbErr) {
         console.error("Error updating node:", dbErr);
+      }
+    }
+  };
+
+  const handleDeleteNode = async (nodeId: string) => {
+    setHistory((h) => [...h, nodes]);
+    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+    // Also remove any local connections referencing this node
+    setConnections((prev) =>
+      prev.filter((c) => c.sourceNode !== nodeId && c.targetNode !== nodeId)
+    );
+    setFuture([]);
+    showStatus("Deleted");
+
+    if (selectedNode?.id === nodeId) {
+      setSelectedNode(null);
+    }
+
+    // Persist deletion to Supabase
+    if (currentProject) {
+      try {
+        // Only persist deletions for nodes that were actually saved (valid UUID IDs)
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const isUuid = typeof nodeId === "string" && uuidRegex.test(nodeId);
+        if (!isUuid) {
+          console.debug(
+            "Skipping backend deletion for non-UUID node ID (local-only):",
+            nodeId
+          );
+          return;
+        }
+        // First delete connections related to this node
+        const connsRes = await fetch(
+          `/api/projects/${currentProject.id}/connections?project_id=${currentProject.id}`,
+          { headers: await buildHeaders(false) }
+        );
+        if (connsRes.ok) {
+          const conns = await connsRes.json().catch(() => []);
+          const related = (conns || []).filter(
+            (c: Connection) =>
+              c.sourceNode === nodeId || c.targetNode === nodeId
+          );
+
+          for (const conn of related) {
+            await fetch(`/api/projects/${currentProject.id}/connections`, {
+              method: "DELETE",
+              headers: await buildHeaders(true),
+              body: JSON.stringify({
+                id: conn.id,
+                project_id: currentProject.id,
+              }),
+            });
+          }
+        }
+
+        // Then delete the node
+        await fetch(`/api/projects/${currentProject.id}/nodes`, {
+          method: "DELETE",
+          headers: await buildHeaders(true),
+          body: JSON.stringify({ id: nodeId, project_id: currentProject.id }),
+        });
+      } catch (error) {
+        console.error("Error deleting node:", error);
       }
     }
   };
@@ -488,21 +594,25 @@ export default function AgentFlowPage() {
       return;
     }
     const prev = prevConnectionsRef.current;
-    const removed = prev.filter(
-      (p) => !connections.some((c) => c.id === p.id)
-    );
+    const removed = prev.filter((p) => !connections.some((c) => c.id === p.id));
     if (removed.length) {
       (async () => {
         for (const r of removed) {
           try {
-            const res = await fetch(`/api/projects/${currentProject.id}/connections`, {
-              method: 'DELETE',
-              headers: await buildHeaders(true),
-              body: JSON.stringify({ id: r.id, project_id: currentProject.id })
-            });
+            const res = await fetch(
+              `/api/projects/${currentProject.id}/connections`,
+              {
+                method: "DELETE",
+                headers: await buildHeaders(true),
+                body: JSON.stringify({
+                  id: r.id,
+                  project_id: currentProject.id,
+                }),
+              }
+            );
             if (!res.ok) {
               const t = await res.text();
-              console.error('Error deleting connection:', r.id, t);
+              console.error("Error deleting connection:", r.id, t);
             }
           } catch (err) {
             console.error("Error deleting connection:", r.id, err);
@@ -524,29 +634,62 @@ export default function AgentFlowPage() {
     const removed = prev.filter((p) => !nodes.some((n) => n.id === p.id));
     if (removed.length) {
       (async () => {
-        for (const r of removed) {
+        // Only attempt to delete nodes that were actually persisted (UUID IDs)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const deletable = removed.filter(
+          (r) => typeof r.id === "string" && uuidRegex.test(r.id)
+        );
+
+        if (removed.length !== deletable.length) {
+          const skipped = removed
+            .filter((r) => !deletable.includes(r))
+            .map((r) => r.id)
+            .join(", ");
+          if (skipped) {
+            console.debug(
+              "Skipping deletion for non-UUID node IDs (local-only):",
+              skipped
+            );
+          }
+        }
+
+        for (const r of deletable) {
           try {
-            const resNode = await fetch(`/api/projects/${currentProject.id}/nodes`, {
-              method: 'DELETE',
-              headers: await buildHeaders(true),
-              body: JSON.stringify({ id: r.id, project_id: currentProject.id })
-            });
+            const resNode = await fetch(
+              `/api/projects/${currentProject.id}/nodes`,
+              {
+                method: "DELETE",
+                headers: await buildHeaders(true),
+                body: JSON.stringify({
+                  id: r.id,
+                  project_id: currentProject.id,
+                }),
+              }
+            );
             if (!resNode.ok) {
               const t = await resNode.text();
-              console.error('Error deleting node:', r.id, t);
+              console.error("Error deleting node:", r.id, t);
             }
             // Related connections are deleted by DB cascade if defined; otherwise ensure cleanup
-            const resConn = await fetch(`/api/projects/${currentProject.id}/connections?project_id=${currentProject.id}`, {
-              headers: await buildHeaders(false)
-            });
+            const resConn = await fetch(
+              `/api/projects/${currentProject.id}/connections?project_id=${currentProject.id}`,
+              {
+                headers: await buildHeaders(false),
+              }
+            );
             if (resConn.ok) {
               const conns = await resConn.json().catch(() => []);
-              const related = (conns || []).filter((c) => c.source_node === r.id || c.target_node === r.id);
+              const related = (conns || []).filter(
+                (c: any) => c.source_node === r.id || c.target_node === r.id
+              );
               for (const c of related) {
                 await fetch(`/api/projects/${currentProject.id}/connections`, {
-                  method: 'DELETE',
+                  method: "DELETE",
                   headers: await buildHeaders(true),
-                  body: JSON.stringify({ id: c.id, project_id: currentProject.id })
+                  body: JSON.stringify({
+                    id: c.id,
+                    project_id: currentProject.id,
+                  }),
                 });
               }
             }
@@ -570,7 +713,7 @@ export default function AgentFlowPage() {
             description: "A new agent flow project",
             status: "draft",
             created_at: new Date().toISOString(),
-            user_id: DEFAULT_USER_ID
+            user_id: DEFAULT_USER_ID,
           })
         }
         onOpenProject={handleOpenProject}
@@ -599,39 +742,72 @@ export default function AgentFlowPage() {
             onCreateConnection={async (connectionData) => {
               if (!currentProject) return;
               try {
-                const res = await fetch(`/api/projects/${currentProject.id}/connections`, {
-                  method: 'POST',
-                  headers: await buildHeaders(true),
-                  body: JSON.stringify({
-                    id: connectionData.id,
-                    project_id: currentProject.id,
-                    source_node: connectionData.sourceNode,
-                    source_output: connectionData.sourceOutput,
-                    target_node: connectionData.targetNode,
-                    target_input: connectionData.targetInput,
-                  })
-                });
-                if (!res.ok) {
-                  const t = await res.text();
-                  console.error('Error creating connection:', t);
-                }
-              } catch (err) {
-                console.error("Error creating connection:", err);
+                const res = await fetch(
+                  `/api/projects/${currentProject.id}/connections`,
+                  {
+                    method: "POST",
+                    headers: await buildHeaders(true),
+                    body: JSON.stringify({
+                      id: connectionData.id,
+                      project_id: currentProject.id,
+                      source_node: connectionData.sourceNode,
+                      source_output: connectionData.sourceOutput,
+                      target_node: connectionData.targetNode,
+                      target_input: connectionData.targetInput,
+                    }),
+                  }
+                );
+                if (!res.ok) throw new Error("Failed to create connection");
+                await fetchConnections(currentProject.id);
+              } catch (error) {
+                console.error("Error creating connection:", error);
               }
             }}
+            onTestFlow={handleTestFlow}
             showTester={showTester}
             testFlowResult={testFlowResult}
             setShowTester={setShowTester}
             setTestFlowResult={setTestFlowResult}
-            onTestFlow={handleTestFlow}
             testButtonDisabled={isTesting}
             startNodeId={startNodeId}
-            onStartNodeChange={handleStartNodeChange}
-            onDeleteNode={(id: string) => {
-              setHistory((h) => [...h, nodes]);
-              setNodes((prev) => prev.filter((n) => n.id !== id));
-              if (selectedNode?.id === id) setSelectedNode(null);
-              showStatus("Deleted");
+            onStartNodeChange={setStartNodeId}
+            onDeleteNode={handleDeleteNode}
+            onNodeCreate={async (newNode) => {
+              if (!currentProject) return;
+
+              try {
+                // Build a normalized data object in a type-safe way
+                const d = (newNode.data ?? {}) as Record<string, any>;
+                const newNodeData = {
+                  id: newNode.subtype,
+                  name: d.title || "New Node",
+                  type: newNode.type,
+                  subtype: newNode.subtype,
+                  color: d.color || "#0066cc",
+                  icon: d.icon || "default",
+                  description: d.description || "",
+                  defaultInputs: newNode.inputs,
+                  defaultOutputs: newNode.outputs,
+                  systemPrompt: d.systemPrompt || "",
+                  personality: d.personality || "",
+                  escalationLogic: d.escalationLogic || "",
+                  confidenceThreshold: d.confidenceThreshold || 0.7,
+                  model: d.model || "gemini-pro",
+                  prompt: d.prompt || "",
+                  template: d.template || "",
+                  variables: d.variables || {},
+                  content: d.content || "",
+                  messageType: d.messageType || "user",
+                  toolConfig: d.toolConfig || {
+                    toolType: "web-search",
+                    parameters: {},
+                  },
+                };
+
+                await handleAddNode(newNodeData);
+              } catch (error) {
+                console.error("Error creating node from drag:", error);
+              }
             }}
           />
         }

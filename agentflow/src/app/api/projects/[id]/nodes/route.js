@@ -122,6 +122,16 @@ export async function DELETE(req) {
       );
     }
 
+    // If the ID is not a UUID, this node was never persisted. Skip deletion gracefully.
+    const idStr = typeof id === 'string' ? id : String(id);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(idStr)) {
+      return new Response(
+        JSON.stringify({ success: true, skipped: true }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     let userId = DEFAULT_USER_ID;
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
@@ -136,22 +146,37 @@ export async function DELETE(req) {
       await supabaseAdmin.from('projects').select('id').eq('id', projectId).eq('user_id', userId).maybeSingle();
     } catch {}
 
-    // Handle string IDs properly - the id column is text type
+    // Check project ownership
+    const { data: project } = await supabaseAdmin
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (!project) {
+      return new Response(
+        JSON.stringify({ error: 'Project not found or not owned by user' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Delete node - handle string IDs by treating as text
     const { error } = await supabaseAdmin
       .from('nodes')
       .delete()
-      .eq('id', id)
+      .eq('id', idStr)
       .eq('project_id', projectId);
 
     if (error) {
-      console.error('Error deleting node:', { id, projectId, error: error.message });
+      console.error('Error deleting node:', error);
       return new Response(
         JSON.stringify({ error: error.message }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }),
@@ -186,10 +211,15 @@ export async function POST(req) {
       await supabaseAdmin.from('projects').select('id').eq('id', body.project_id).eq('user_id', userId).maybeSingle();
     } catch {}
 
-    // Allow string IDs like "prompt-node-1" - the database will handle them
+    // Generate proper UUID for node ID to avoid database format issues
+    const nodeId = body.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.id) 
+      ? body.id 
+      : crypto.randomUUID();
+    
     const insert = {
-      id: body.id, // Accept whatever ID is provided (string or UUID)
+      id: nodeId,
       project_id: body.project_id,
+      user_id: userId,
       type: body.type,
       subtype: body.subtype ?? null,
       position: body.position ?? null,

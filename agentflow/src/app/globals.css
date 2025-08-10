@@ -270,8 +270,13 @@
     @apply border-border;
   }
 
-  html {
-    @apply scroll-smooth;
+  html, body, #__next {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   body {
@@ -280,9 +285,16 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Ensure the background is always Figma BG and no margin/padding at top */
     background-color: var(--figma-bg) !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
     color: var(--figma-text);
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  .canvas-container {
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   h1,

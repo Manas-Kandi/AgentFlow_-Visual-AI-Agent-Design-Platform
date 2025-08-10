@@ -5,7 +5,6 @@ import { runWorkflow } from "@/lib/workflowRunner";
 import ConversationTester from "@/components/tester/ConversationTester";
 import TesterV2 from "@/components/tester/TesterV2";
 import { TESTER_V2_ENABLED } from "@/lib/flags";
-import PropertiesPanel from "@/components/panels/PropertiesPanel";
 import { KnowledgeBaseNode } from "@/lib/nodes/knowledge/KnowledgeBaseNode";
 import type {
   TesterEvent,
@@ -30,6 +29,7 @@ interface DesignerCanvasProps {
   startNodeId: string | null;
   onStartNodeChange: (id: string | null) => void;
   onDeleteNode: (nodeId: string) => void;
+  onNodeCreate?: (node: CanvasNode) => void;
 }
 
 export default function DesignerCanvas(props: DesignerCanvasProps) {
@@ -50,6 +50,7 @@ export default function DesignerCanvas(props: DesignerCanvasProps) {
     startNodeId,
     onStartNodeChange,
     onDeleteNode,
+    onNodeCreate,
   } = props;
 
   // --- Local state for test logs and testing status ---
@@ -426,32 +427,25 @@ export default function DesignerCanvas(props: DesignerCanvasProps) {
           </button>
         </div>
       )}
-      <div className="absolute top-4 left-4 z-30">
-        
+      <div className="flex-1 relative overflow-hidden">
+        {/* Canvas Area */}
+        <CanvasEngine
+          nodes={nodes}
+          connections={connections}
+          onNodeSelect={onNodeSelect}
+          onNodeDrag={handleNodeDrag}
+          onNodeUpdate={onNodeUpdate}
+          onConnectionsChange={onConnectionsChange}
+          onCreateConnection={onCreateConnection}
+          onNodeCreate={onNodeCreate}
+          selectedNodeId={selectedNode?.id || null}
+          startNodeId={startNodeId}
+          onStartNodeChange={onStartNodeChange}
+          onNodeDelete={onDeleteNode}
+          nodeStatuses={nodeStatuses}
+          pulsingConnectionIds={pulsingConnectionIds}
+        />
       </div>
-      <CanvasEngine
-        nodes={nodes}
-        connections={connections}
-        onNodeSelect={onNodeSelect}
-        onNodeUpdate={onNodeUpdate}
-        onConnectionsChange={onConnectionsChange}
-        onCreateConnection={onCreateConnection}
-        onNodeDrag={handleNodeDrag}
-        selectedNodeId={selectedNode ? selectedNode.id : null}
-        startNodeId={startNodeId}
-        onStartNodeChange={onStartNodeChange}
-        onNodeDelete={handleNodeDelete}
-        nodeStatuses={nodeStatuses}
-        pulsingConnectionIds={pulsingConnectionIds}
-      />
-      <PropertiesPanel
-        selectedNode={selectedNode}
-        onChange={onNodeUpdate}
-        nodes={nodes}
-        connections={connections}
-        onConnectionsChange={onConnectionsChange}
-      />
-      {/* Pass the selected node id here if available */}
     </div>
   );
 }
