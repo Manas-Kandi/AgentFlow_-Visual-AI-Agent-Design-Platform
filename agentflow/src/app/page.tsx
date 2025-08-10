@@ -12,6 +12,7 @@ import PropertiesPanel from "@/components/panels/PropertiesPanel";
 import { nodeCategories } from "@/data/nodeDefinitions";
 import { runWorkflow } from "@/lib/workflowRunner";
 import { TESTER_V2_ENABLED } from "@/lib/flags";
+import logger from "@/lib/logger";
 
 const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -124,7 +125,7 @@ export default function AgentFlowPage() {
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
       if (!res.ok) {
-        console.error("Error fetching projects:", payload);
+        logger.error("Error fetching projects:", payload);
         return;
       }
       const transformedProjects: Project[] = (payload || []).map((project: any) => ({
@@ -140,7 +141,7 @@ export default function AgentFlowPage() {
       }));
       setProjects(transformedProjects);
     } catch (err) {
-      console.error("Unexpected error fetching projects:", err);
+      logger.error("Unexpected error fetching projects:", err);
     }
   };
 
@@ -153,7 +154,7 @@ export default function AgentFlowPage() {
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
       if (!res.ok) {
-        console.error("Error fetching nodes:", payload);
+        logger.error("Error fetching nodes:", payload);
         return;
       }
       const transformedNodes: CanvasNode[] = (payload || []).map((node: any) => ({
@@ -174,7 +175,7 @@ export default function AgentFlowPage() {
 
       setNodes(transformedNodes);
     } catch (err) {
-      console.error("Unexpected error fetching nodes:", err);
+      logger.error("Unexpected error fetching nodes:", err);
     }
   };
 
@@ -187,7 +188,7 @@ export default function AgentFlowPage() {
       const isJson = ct.includes("application/json");
       const payload = isJson ? await res.json().catch(() => []) : [];
       if (!res.ok) {
-        console.error("Error fetching connections:", payload);
+        logger.error("Error fetching connections:", payload);
         return;
       }
       const transformedConnections: Connection[] = (payload || []).map((conn: any) => ({
@@ -200,7 +201,7 @@ export default function AgentFlowPage() {
 
       setConnections(transformedConnections);
     } catch (err) {
-      console.error("Unexpected error fetching connections:", err);
+      logger.error("Unexpected error fetching connections:", err);
     }
   };
 
@@ -215,7 +216,7 @@ export default function AgentFlowPage() {
       });
       if (!res.ok) {
         const errText = await res.text();
-        console.error("Error updating start node:", errText);
+        logger.error("Error updating start node:", errText);
         return;
       }
       setCurrentProject({ ...currentProject, startNodeId: nodeId });
@@ -223,7 +224,7 @@ export default function AgentFlowPage() {
         prev.map((p) => (p.id === currentProject.id ? { ...p, startNodeId: nodeId } : p))
       );
     } catch (err) {
-      console.error("Unexpected error updating start node:", err);
+      logger.error("Unexpected error updating start node:", err);
     }
   };
 
@@ -232,12 +233,12 @@ export default function AgentFlowPage() {
   ) => {
     try {
       // Log environment check
-      console.log("Checking Supabase connection...");
-      console.log("Supabase URL exists:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log("Supabase Anon Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      logger.debug("Checking Supabase connection...");
+      logger.debug("Supabase URL exists:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+      logger.debug("Supabase Anon Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
       // Log input data
-      console.log("Creating project with data:", {
+      logger.debug("Creating project with data:", {
         name: projectData.name,
         description: projectData.description,
         status: projectData.status
@@ -251,7 +252,7 @@ export default function AgentFlowPage() {
         user_id: DEFAULT_USER_ID
       };
 
-      console.log("Attempting to insert project with data:", newProjectData);
+      logger.debug("Attempting to insert project with data:", newProjectData);
 
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -262,7 +263,7 @@ export default function AgentFlowPage() {
       const isJson = ct.includes('application/json');
       const payload = isJson ? await res.json().catch(() => null) : null;
       if (!res.ok || !payload) {
-        console.error('Project create failed:', payload);
+        logger.error('Project create failed:', payload);
         setStatusMessage(`Failed to create project: ${!res.ok ? res.status : 'No data returned'}`);
         return;
       }
@@ -290,7 +291,7 @@ export default function AgentFlowPage() {
       // Show success message
       setStatusMessage("Project created successfully");
     } catch (err) {
-      console.error("Unexpected error creating project:", err);
+      logger.error("Unexpected error creating project:", err);
       setStatusMessage("Failed to create project: Unexpected error");
     }
   };
@@ -408,15 +409,15 @@ export default function AgentFlowPage() {
         });
         if (!res.ok) {
           const t = await res.text();
-          console.error('Error saving new node:', t);
+          logger.error('Error saving new node:', t);
         }
       } catch (dbErr) {
-        console.error("Error saving new node:", dbErr);
+        logger.error("Error saving new node:", dbErr);
       }
 
       setNodes([...nodes, newNode]);
     } catch (err) {
-      console.error("Error adding node:", err);
+      logger.error("Error adding node:", err);
     }
   };
 
@@ -446,10 +447,10 @@ export default function AgentFlowPage() {
         });
         if (!res.ok) {
           const t = await res.text();
-          console.error('Error updating node:', t);
+          logger.error('Error updating node:', t);
         }
       } catch (dbErr) {
-        console.error("Error updating node:", dbErr);
+        logger.error("Error updating node:", dbErr);
       }
     }
   };
@@ -468,7 +469,7 @@ export default function AgentFlowPage() {
       const result = await runWorkflow(nodes, connections, startNodeId);
       setTestFlowResult(result);
     } catch (err) {
-      console.error("Error running workflow:", err);
+      logger.error("Error running workflow:", err);
       setTestFlowResult({
         error: err instanceof Error ? err.message : "Unknown error",
       });
@@ -479,7 +480,7 @@ export default function AgentFlowPage() {
 
   // Debug logging for connections state
   useEffect(() => {
-    console.log("Connections state updated:", connections);
+    logger.debug("Connections state updated:", connections);
   }, [connections]);
 
   // Persist connection deletions to Supabase
@@ -504,10 +505,10 @@ export default function AgentFlowPage() {
             });
             if (!res.ok) {
               const t = await res.text();
-              console.error('Error deleting connection:', r.id, t);
+              logger.error('Error deleting connection:', r.id, t);
             }
           } catch (err) {
-            console.error("Error deleting connection:", r.id, err);
+            logger.error("Error deleting connection:", r.id, err);
           }
         }
       })();
@@ -535,7 +536,7 @@ export default function AgentFlowPage() {
             });
             if (!resNode.ok) {
               const t = await resNode.text();
-              console.error('Error deleting node:', r.id, t);
+              logger.error('Error deleting node:', r.id, t);
             }
             // Related connections are deleted by DB cascade if defined; otherwise ensure cleanup
             const resConn = await fetch(`/api/projects/${currentProject.id}/connections?project_id=${currentProject.id}`, {
@@ -553,7 +554,7 @@ export default function AgentFlowPage() {
               }
             }
           } catch (err) {
-            console.error("Error deleting node or its connections:", r.id, err);
+            logger.error("Error deleting node or its connections:", r.id, err);
           }
         }
       })();
@@ -615,10 +616,10 @@ export default function AgentFlowPage() {
                 });
                 if (!res.ok) {
                   const t = await res.text();
-                  console.error('Error creating connection:', t);
+                  logger.error('Error creating connection:', t);
                 }
               } catch (err) {
-                console.error("Error creating connection:", err);
+                logger.error("Error creating connection:", err);
               }
             }}
             showTester={showTester}

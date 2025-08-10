@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, Folder, FolderOpen, File, Plus } from 'lucid
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import type { Project } from '@/types/project';
+import logger from '@/lib/logger';
 
 interface Folder {
   id: string;
@@ -36,7 +37,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
 
   const fetchFolders = async () => {
     try {
-      console.log('Fetching folders...');
+      logger.debug('Fetching folders...');
       
       const { data, error } = await supabase
         .from('folders')
@@ -49,8 +50,8 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         .order('created_at');
 
       if (error) {
-        console.error('Error fetching folders:', error);
-        console.error('Error details:', {
+      logger.error('Error fetching folders:', error);
+      logger.error('Error details:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -59,7 +60,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         return;
       }
 
-      console.log('Fetched folders:', data);
+      logger.debug('Fetched folders:', data);
 
       // Transform the flat folder list into a tree structure
       const folderMap = new Map<string, Folder>();
@@ -87,13 +88,13 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
 
       setFolders(rootFolders);
     } catch (err) {
-      console.error('Error in fetchFolders:', err);
+      logger.error('Error in fetchFolders:', err);
     }
   };
 
   const handleCreateFolder = async (parentId: string | null) => {
     try {
-      console.log('Creating folder with parent:', parentId);
+      logger.debug('Creating folder with parent:', parentId);
       
       const newFolder = {
         name: 'New Folder',
@@ -101,7 +102,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         user_id: '00000000-0000-0000-0000-000000000000'
       };
       
-      console.log('Folder data:', newFolder);
+      logger.debug('Folder data:', newFolder);
 
       const { data, error } = await supabase
         .from('folders')
@@ -110,8 +111,8 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         .single();
 
       if (error) {
-        console.error('Error creating folder:', error);
-        console.error('Error details:', {
+        logger.error('Error creating folder:', error);
+        logger.error('Error details:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -121,15 +122,15 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
       }
 
       if (!data) {
-        console.error('No data returned from folder creation');
+      logger.error('No data returned from folder creation');
         return;
       }
 
-      console.log('Folder created successfully:', data);
+      logger.debug('Folder created successfully:', data);
       setEditingFolderId(data.id);
       await fetchFolders();
     } catch (err) {
-      console.error('Unexpected error creating folder:', err);
+      logger.error('Unexpected error creating folder:', err);
     }
   };
 
@@ -141,14 +142,14 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         .eq('id', folderId);
 
       if (error) {
-        console.error('Error updating folder name:', error);
+        logger.error('Error updating folder name:', error);
         return;
       }
 
       setEditingFolderId(null);
       await fetchFolders();
     } catch (err) {
-      console.error('Error updating folder name:', err);
+      logger.error('Error updating folder name:', err);
     }
   };
 
@@ -167,7 +168,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
         }]);
 
       if (error) {
-        console.error('Error moving project to folder:', error);
+        logger.error('Error moving project to folder:', error);
         return;
       }
 
@@ -177,7 +178,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
       (window as any).draggedProjectId = null;
       await fetchFolders();
     } catch (err) {
-      console.error('Error moving project to folder:', err);
+      logger.error('Error moving project to folder:', err);
     }
   };
 

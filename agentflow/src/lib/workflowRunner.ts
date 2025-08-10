@@ -3,6 +3,7 @@ import type { TesterEvent } from "@/types/tester";
 import type { RunExecutionOptions } from "@/types/run";
 import { FlowEngine } from "./flow/FlowEngine";
 import { evaluateAssertions } from "@/lib/assertions";
+import logger from "./logger";
 
 // Helper to safely get node title
 function getNodeTitle(node: CanvasNode): string {
@@ -61,17 +62,17 @@ export async function runWorkflow(
       });
       const header = `Assertions: ${result.passed ? "PASSED" : "FAILED"} (${result.results.filter(r=>r.pass).length}/${result.results.length})`;
       if (emitLog) emitLog("flow", header, result as unknown, result.passed ? undefined : "Some assertions failed");
-      else console.log("[Tester]", header, result);
+      else logger.debug("[Tester]", header, result);
       // Also log each assertion result for clarity
       for (const r of result.results) {
         const msg = `${r.pass ? "✓" : "✗"} ${r.description || r.op}${r.path ? ` @ ${r.path}` : ""} → ${r.pass ? "pass" : "fail"}. ${r.message}`;
-        if (emitLog) emitLog("flow", msg);
-        else console.log("[Tester]", msg);
+          if (emitLog) emitLog("flow", msg);
+          else logger.debug("[Tester]", msg);
       }
     } catch (err) {
       const emsg = err instanceof Error ? err.message : String(err);
       if (emitLog) emitLog("flow", "Assertions evaluation error", undefined, emsg);
-      else console.warn("[Tester] Assertions evaluation error:", err);
+      else logger.error("[Tester] Assertions evaluation error:", err);
     }
   }
 

@@ -5,6 +5,7 @@ import { CanvasNode, Connection, ProjectFile } from '@/types';
 import getPort, { portNumbers } from 'get-port';
 import http from 'http';
 import { CURRENT_EXPORT_VERSION, getMcpExportSchema } from './schema';
+import logger from './logger';
 
 const app = express();
 
@@ -16,8 +17,8 @@ const runningServers: Map<string, http.Server> =
   globalAny.__agentflowMcpServers || (globalAny.__agentflowMcpServers = new Map());
 
 export const startMcpServer = async (projectId: string): Promise<number> => {
-  if (runningServers.has(projectId)) {
-    console.log(`Server for project ${projectId} is already running.`);
+    if (runningServers.has(projectId)) {
+      logger.debug(`Server for project ${projectId} is already running.`);
     const server = runningServers.get(projectId);
     const address = server?.address();
     if (typeof address === 'object' && address !== null) {
@@ -64,7 +65,7 @@ export const startMcpServer = async (projectId: string): Promise<number> => {
       );
       res.json(mcpData);
     } catch (error) {
-      console.error('Error fetching project data for MCP:', error);
+        logger.error('Error fetching project data for MCP:', error);
       res.status(500).json({ error: 'Failed to fetch project data' });
     }
   });
@@ -110,14 +111,14 @@ export const startMcpServer = async (projectId: string): Promise<number> => {
       }
       res.redirect(signed.signedUrl);
     } catch (err) {
-      console.error('Error generating file download URL:', err);
+        logger.error('Error generating file download URL:', err);
       res.status(500).json({ error: 'Failed to generate file download URL' });
     }
   });
 
   return new Promise((resolve) => {
     server.listen(port, '127.0.0.1', () => {
-      console.log(`MCP Server started for project ${projectId} on http://localhost:${port}`);
+        logger.debug(`MCP Server started for project ${projectId} on http://localhost:${port}`);
       runningServers.set(projectId, server);
       resolve(port);
     });
@@ -129,12 +130,12 @@ export const stopMcpServer = (projectId: string): Promise<void> => {
         const server = runningServers.get(projectId);
         if (server) {
             server.close(() => {
-                console.log(`MCP Server for project ${projectId} stopped.`);
+                  logger.debug(`MCP Server for project ${projectId} stopped.`);
                 runningServers.delete(projectId);
                 resolve();
             });
         } else {
-            console.log(`No server found for project ${projectId}.`);
+              logger.debug(`No server found for project ${projectId}.`);
             resolve();
         }
     });
