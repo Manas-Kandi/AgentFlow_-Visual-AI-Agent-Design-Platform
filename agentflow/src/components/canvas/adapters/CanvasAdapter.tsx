@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { CanvasNode, Connection } from "@/types";
-import { useCanvasEngine } from "./useCanvasEngine";
 import { CanvasEngine } from "./CanvasEngine";
+import { microAgents } from "@/data/microAgents";
 
 interface CanvasAdapterProps {
   nodes: CanvasNode[];
@@ -104,7 +104,6 @@ export default function CanvasAdapter({
       ? node.inputs?.length ?? 1
       : node.outputs?.length ?? 1;
 
-    const spacing = 40;
     const offsetY = (portIndex + 1) * (200 / (totalPorts + 1));
 
     return {
@@ -260,6 +259,48 @@ export default function CanvasAdapter({
     onStartNodeChange(nodeId);
   }, [onStartNodeChange]);
 
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const agentType = e.dataTransfer.getData('application/node-type');
+    if (!agentType) return;
+
+    const template = microAgents.find(a => a.id === agentType);
+    const canvasPos = screenToCanvas(e.clientX, e.clientY);
+    const position = { x: canvasPos.x - 100, y: canvasPos.y - 50 };
+
+    const newNode: CanvasNode = {
+      id: `node-${Date.now()}`,
+      type: 'agent',
+      subtype: agentType,
+      label: template?.name || agentType,
+      description: template?.description,
+      position,
+      size: { width: 200, height: 100 },
+      data: {
+        title: template?.name || agentType,
+        description: template?.description || '',
+        color: '#00c4ff',
+        icon: template?.id || 'agent',
+      },
+      inputs: [
+        { id: 'prompt', label: 'Prompt', type: 'text' },
+        { id: 'input-1', label: 'Input', type: 'text' },
+        { id: 'context', label: 'Context', type: 'data' },
+      ],
+      outputs: [
+        { id: 'output-1', label: 'Response', type: 'text' },
+        { id: 'metadata', label: 'Metadata', type: 'data' },
+      ],
+    } as CanvasNode;
+
+    onNodeCreate(newNode);
+    onNodeSelect(newNode);
+  }, [screenToCanvas, onNodeCreate, onNodeSelect]);
+
   return (
     <div
       ref={canvasRef}
@@ -280,6 +321,8 @@ export default function CanvasAdapter({
       onMouseUp={handleCanvasMouseUp}
       onMouseLeave={handleCanvasMouseUp}
       onWheel={handleWheel}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <CanvasEngine
         nodes={nodes}
