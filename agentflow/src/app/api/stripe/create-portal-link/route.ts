@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
     return new NextResponse('Error creating customer portal link', { status: 500 });
   }

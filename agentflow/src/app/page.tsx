@@ -127,7 +127,7 @@ export default function AgentFlowPage() {
         console.error("Error fetching projects:", payload);
         return;
       }
-      const transformedProjects: Project[] = (payload || []).map((project: any) => ({
+      const transformedProjects: Project[] = (payload || []).map((project: Project) => ({
         id: project.id,
         name: project.name || "Untitled Project",
         description: project.description || "",
@@ -156,17 +156,15 @@ export default function AgentFlowPage() {
         console.error("Error fetching nodes:", payload);
         return;
       }
-      const transformedNodes: CanvasNode[] = (payload || []).map((node: any) => ({
+      const transformedNodes: CanvasNode[] = (payload || []).map((node: CanvasNode) => ({
         id: node.id,
         type: node.type,
         subtype: node.subtype || "",
         position: node.position || { x: 100, y: 100 },
         size: node.size || { width: 200, height: 100 },
         data: node.data || {
-          title: "Untitled Node",
-          description: "No description",
-          color: "#0066cc",
-          icon: "User",
+          label: "New Node",
+          config: {}
         },
         inputs: node.inputs || [{ id: "input-1", label: "Input" }],
         outputs: node.outputs || [{ id: "output-1", label: "Output" }],
@@ -190,7 +188,7 @@ export default function AgentFlowPage() {
         console.error("Error fetching connections:", payload);
         return;
       }
-      const transformedConnections: Connection[] = (payload || []).map((conn: any) => ({
+      const transformedConnections: Connection[] = (payload || []).map((conn) => ({
         id: conn.id,
         sourceNode: conn.source_node,
         sourceOutput: conn.source_output,
@@ -543,7 +541,7 @@ export default function AgentFlowPage() {
             });
             if (resConn.ok) {
               const conns = await resConn.json().catch(() => []);
-              const related = (conns || []).filter((c: any) => c.source_node === r.id || c.target_node === r.id);
+              const related = (conns || []).filter((c) => c.source_node === r.id || c.target_node === r.id);
               for (const c of related) {
                 await fetch(`/api/projects/${currentProject.id}/connections`, {
                   method: 'DELETE',

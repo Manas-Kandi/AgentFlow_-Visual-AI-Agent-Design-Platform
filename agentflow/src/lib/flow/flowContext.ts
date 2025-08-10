@@ -48,12 +48,12 @@ export function safeStringify(value: unknown): string {
 }
 
 // Redact known sensitive keys (case-insensitive)
-export function redactConfig<T = any>(input: T, keys = DEFAULT_REDACT_KEYS): T {
+export function redactConfig<T = Record<string, unknown>>(input: T, keys = DEFAULT_REDACT_KEYS): T {
   const keySet = new Set(keys.map((k) => k.toLowerCase()));
-  const visit = (val: any): any => {
+  const visit = (val: unknown): unknown => {
     if (val === null || typeof val !== "object") return val;
     if (Array.isArray(val)) return val.map(visit);
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(val)) {
       if (keySet.has(k.toLowerCase())) {
         out[k] = "[redacted]";
@@ -67,10 +67,10 @@ export function redactConfig<T = any>(input: T, keys = DEFAULT_REDACT_KEYS): T {
 }
 
 // Replace overly large fields with a brief summary string
-export function truncateLargeFields(input: any, byteLimit = DEFAULT_BYTE_LIMIT): any {
+export function truncateLargeFields(input: unknown, byteLimit = DEFAULT_BYTE_LIMIT): unknown {
   const summarize = (sizeBytes: number) => `"[omitted: ${(sizeBytes / 1024).toFixed(1)} KB]"`;
 
-  const visit = (val: any): any => {
+  const visit = (val: unknown): unknown => {
     if (val == null) return val;
 
     if (typeof val === "string") {
@@ -91,7 +91,7 @@ export function truncateLargeFields(input: any, byteLimit = DEFAULT_BYTE_LIMIT):
 
     // Plain object
     const entries = Object.entries(val);
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
     for (const [k, v] of entries) {
       // First check size of entire subtree
       const subtree = v;
@@ -116,8 +116,8 @@ export function truncateLargeFields(input: any, byteLimit = DEFAULT_BYTE_LIMIT):
 }
 
 // Keep only scalar fields and small metadata from a config object
-export function pruneConfigForFlowContext(config: any, byteLimit = DEFAULT_BYTE_LIMIT): any {
-  const isScalar = (v: any) =>
+export function pruneConfigForFlowContext(config: unknown, byteLimit = DEFAULT_BYTE_LIMIT): unknown {
+  const isScalar = (v: unknown) =>
     v == null || typeof v === "string" || typeof v === "number" || typeof v === "boolean";
 
   if (isScalar(config)) return truncateLargeFields(config, byteLimit);
@@ -131,7 +131,7 @@ export function pruneConfigForFlowContext(config: any, byteLimit = DEFAULT_BYTE_
   }
 
   // Plain object: include scalars; for non-scalars, include only if small
-  const out: Record<string, any> = {};
+  const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(config ?? {})) {
     if (isScalar(v)) {
       out[k] = truncateLargeFields(v, byteLimit);
@@ -180,10 +180,10 @@ export function applyTransformSpecToOutput(output: NodeOutput, spec?: TransformS
   // Only apply to plain object outputs
   if (typeof output !== "object" || output === null || Array.isArray(output)) return output;
   // Start with a shallow copy
-  let result: Record<string, any> = { ...output };
+  let result: Record<string, unknown> = { ...output };
 
   if (spec.pickPaths && spec.pickPaths.length > 0) {
-    const picked: Record<string, any> = {};
+    const picked: Record<string, unknown> = {};
     for (const key of spec.pickPaths) {
       if (key in result) picked[key] = result[key];
     }
@@ -195,8 +195,8 @@ export function applyTransformSpecToOutput(output: NodeOutput, spec?: TransformS
   }
 
   if (spec.rename) {
-    const renamed: Record<string, any> = {};
-    for (const [from, to] of Object.entries(spec.rename)) {
+    const renamed: Record<string, unknown> = {};
+    for (const [from, to] of Object.entries(spec.rename as Record<string, string>)) {
       if (from in result) {
         renamed[to] = result[from];
         delete result[from];

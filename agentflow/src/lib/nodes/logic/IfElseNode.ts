@@ -16,11 +16,11 @@ export class IfElseNode extends BaseNode {
       if (typeof val === "string") return val;
       if (val && typeof val === "object") {
         // Common fields
-        if (typeof (val as any).output === "string") return (val as any).output;
-        if (typeof (val as any).message === "string") return (val as any).message;
+        if (typeof (val as Record<string, unknown>).output === "string") return (val as Record<string, unknown>).output as string;
+        if (typeof (val as Record<string, unknown>).message === "string") return (val as Record<string, unknown>).message as string;
         // Gemini extraction
         if ("gemini" in val && val.gemini) {
-          const g: any = (val as any).gemini;
+          const g: unknown = (val as Record<string, unknown>).gemini;
           const t = g?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (typeof t === "string") return t;
         }
@@ -45,7 +45,7 @@ export class IfElseNode extends BaseNode {
 
     try {
       const overrides = context.runOptions?.overrides || {};
-      const llm = await callLLM(userPrompt, { temperature: 0, provider: overrides.provider as any, model: overrides.model });
+      const llm = await callLLM(userPrompt, { temperature: 0, provider: overrides.provider, model: overrides.model });
       const resultText = (llm.text || "").trim().toUpperCase();
       const isTrue = resultText === "TRUE";
       return {

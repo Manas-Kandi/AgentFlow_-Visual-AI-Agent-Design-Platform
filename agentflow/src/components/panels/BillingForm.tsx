@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { stripe } from '@/lib/stripe';
+ 
 
 interface BillingFormProps {
-  subscriptionPlan: any; // Replace with your subscription plan type
+  subscriptionPlan: { name: string } & Record<string, unknown>;
 }
 
 export default function BillingForm({ subscriptionPlan }: BillingFormProps) {
@@ -25,16 +24,18 @@ export default function BillingForm({ subscriptionPlan }: BillingFormProps) {
       const isJson = ct.includes('application/json');
       const payload = isJson ? await res.json().catch(() => ({})) : await res.text();
       if (!res.ok) {
-        const msg = isJson ? (payload as any)?.message : String(payload);
+        const rawMsg = isJson ? (payload as Record<string, unknown>)?.message : undefined;
+        const msg = typeof rawMsg === 'string' ? rawMsg : isJson ? JSON.stringify(payload) : String(payload);
         throw new Error(msg || `Failed to create portal link (HTTP ${res.status})`);
       }
-      const url = (payload as any)?.url;
-      if (!url) throw new Error('No portal URL returned');
+      const url = (payload as Record<string, unknown>)?.url;
+      if (typeof url !== 'string' || !url) throw new Error('No portal URL returned');
       window.location.assign(url);
     } catch (error) {
-      if (error) return alert((error as Error).message);
+      alert((error as Error)?.message ?? 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

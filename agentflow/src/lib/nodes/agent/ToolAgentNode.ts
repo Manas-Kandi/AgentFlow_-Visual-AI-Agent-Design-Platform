@@ -98,7 +98,7 @@ export class ToolAgentNode extends BaseNode {
       const llm = await callLLM(toolPrompt, {
         // Rely on global defaults for provider/model (NVIDIA). Only honor explicit overrides.
         model: overrides.model,
-        provider: overrides.provider as any,
+        provider: overrides.provider,
         // Tool agent expects structured data; ask NVIDIA (OpenAI-compatible) for JSON content
         response_format: 'json',
         // Strong system to enforce simulation output instead of errors
@@ -129,8 +129,8 @@ export class ToolAgentNode extends BaseNode {
         }
       };
 
-      let text = clean(llm.text || "");
-      let parsed: any | null = null;
+      const text = clean(llm.text || "");
+      let parsed: Record<string, unknown> | null = null;
       if (text) {
         try { parsed = JSON.parse(text); } catch {}
       }
@@ -146,9 +146,9 @@ export class ToolAgentNode extends BaseNode {
         const looksCalendar = /calendar/i.test(rules?.nl || "") || /calendar/i.test(data.prompt || "");
         if (looksCalendar) {
           const needsFallback =
-            (typeof parsed === 'object' && parsed !== null && 'error' in (parsed as any)) ||
-            !(typeof parsed === 'object' && parsed !== null && 'free_timeslots' in (parsed as any)) ||
-            (Array.isArray((parsed as any).free_timeslots) && (parsed as any).free_timeslots.length === 0);
+            (typeof parsed === 'object' && parsed !== null && 'error' in (parsed as Record<string, unknown>)) ||
+            !(typeof parsed === 'object' && parsed !== null && 'free_timeslots' in (parsed as Record<string, unknown>)) ||
+            (Array.isArray((parsed as Record<string, unknown>).free_timeslots) && (parsed as Record<string, unknown>).free_timeslots.length === 0);
           if (needsFallback) {
             const fallback = this.buildCalendarFallback();
             return { data: fallback, metadata: { provider: llm.provider, format: 'json', mode: 'live', fallback: true }, llm: llm.raw } as unknown as NodeOutput;

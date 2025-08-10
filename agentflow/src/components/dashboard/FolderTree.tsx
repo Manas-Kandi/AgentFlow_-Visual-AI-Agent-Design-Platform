@@ -156,7 +156,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
     try {
       e.preventDefault();
       // Check for both internal drag (draggedProject) and external drag (window.draggedProjectId)
-      const projectId = draggedProject || (window as any).draggedProjectId;
+      const projectId = draggedProject || (window as unknown as { draggedProjectId: string }).draggedProjectId;
       if (!projectId) return;
 
       const { error } = await supabase
@@ -174,7 +174,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
       setDraggedProject(null);
       setDragOverFolderId(null);
       // Clear the global drag state
-      (window as any).draggedProjectId = null;
+      (window as unknown as { draggedProjectId: string | null }).draggedProjectId = null;
       await fetchFolders();
     } catch (err) {
       console.error('Error moving project to folder:', err);
@@ -195,7 +195,7 @@ export default function FolderTree({ onSelectProject, onSelectFolder, selectedPr
           onDragOver={(e) => {
             e.preventDefault();
             // Accept drops from both internal and external projects
-            if (draggedProject || (window as any).draggedProjectId) {
+            if (draggedProject || (window as unknown as { draggedProjectId: string }).draggedProjectId) {
               setDragOverFolderId(folder.id);
             }
           }}

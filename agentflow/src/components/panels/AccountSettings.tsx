@@ -1,15 +1,50 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import BillingForm from './BillingForm';
-import { ShieldCheck, CreditCard, Check, Star, Zap } from "lucide-react";
+import { CreditCard, Check, Star, Zap } from "lucide-react";
+import ModelProviderSettings from "@/components/panels/ModelProviderSettings";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [userId, setUserId] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+
+  // Load current user for settings panels
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const u = data?.user;
+        if (u && mounted) {
+          setUserId(u.id);
+          setUserEmail(u.email || "");
+        }
+        // Fallback: developer login from localStorage
+        if (!u && mounted && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('dev_user');
+            if (raw) {
+              const dev = JSON.parse(raw);
+              if (dev?.id) {
+                setUserId(dev.id);
+                setUserEmail(dev.email || "");
+              }
+            }
+          } catch {}
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const plans = [
     { 
@@ -79,13 +114,18 @@ export default function AccountSettings() {
       const isJson = ct.includes('application/json');
       const payload = isJson ? await res.json().catch(() => ({})) : await res.text();
       if (!res.ok) {
-        const msg = isJson ? (payload as any)?.message : String(payload);
+        const msg = isJson ? (payload as { message?: string })?.message : String(payload);
         throw new Error(msg || `Checkout session failed (HTTP ${res.status})`);
       }
-      const sessionId = (payload as any)?.sessionId;
+      const sessionId = (payload as { sessionId?: string })?.sessionId;
       if (!sessionId) throw new Error('No sessionId returned');
 
-      const stripe = await (window as any).Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+      // Ensure publishable key exists and is a string
+      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+      if (!publishableKey) {
+        throw new Error('Stripe publishable key is not set. Please define NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.');
+      }
+      const stripe = await (window as unknown as { Stripe: (key: string) => { redirectToCheckout: (options: { sessionId: string }) => Promise<void> } }).Stripe(publishableKey);
       await stripe.redirectToCheckout({ sessionId });
     } catch (error) {
       alert((error as Error).message);
@@ -95,6 +135,18 @@ export default function AccountSettings() {
   
   return (
     <div className="w-full max-w-none space-y-12 p-6">
+      {/* Model Provider Section */}
+      <div className="space-y-4 pb-8 border-b border-border/50">
+        <div>
+          <h2 className="text-xl font-medium mb-2 text-white/80">Model Provider</h2>
+          <p className="text-sm text-white/50">Choose Weev-hosted or bring your own API key</p>
+        </div>
+        {userId ? (
+          <ModelProviderSettings userId={userId} userEmail={userEmail} />
+        ) : (
+          <div className="text-sm text-white/50">Sign in to configure model provider settings.</div>
+        )}
+      </div>
       {/* Current Subscription Section */}
       <div className="space-y-4 pb-8 border-b border-border/50">
         <div>

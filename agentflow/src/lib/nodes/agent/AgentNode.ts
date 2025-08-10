@@ -58,10 +58,10 @@ export class AgentNode extends BaseNode {
       const llm = await callLLM(finalPrompt, {
         // Do NOT pass node-level provider/model; rely on global defaults unless explicitly overridden
         model: overrides.model,
-        provider: overrides.provider as any,
+        provider: overrides.provider,
         temperature: typeof overrides.temperature === "number"
           ? overrides.temperature
-          : (typeof (data as any).temperature === "number" ? (data as any).temperature : 0.2),
+          : (typeof (data as Record<string, unknown>).temperature === "number" ? (data as Record<string, unknown>).temperature as number : 0.2),
         seed: overrides.seed,
         system: combinedSystem || undefined,
       });

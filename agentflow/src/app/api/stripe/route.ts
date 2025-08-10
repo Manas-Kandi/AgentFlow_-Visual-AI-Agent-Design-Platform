@@ -22,21 +22,12 @@ export async function POST(req: Request) {
     // For now, we'll use a hardcoded user. In a real application, you'd get this from your authentication system.
     const user = { id: 'user_placeholder_id', email: 'user@example.com' };
 
-    let customer;
-    // In a real app, you would fetch the user's Stripe customer ID from your database.
-    // const { data: profile } = await supabase.from('profiles').select('stripe_customer_id').eq('id', user.id).single();
-    // if (profile?.stripe_customer_id) {
-    //   customer = { id: profile.stripe_customer_id };
-    // } else {
-      customer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          userId: user.id,
-        },
-      });
-      // And you would save the new customer ID to your database.
-      // await supabase.from('profiles').update({ stripe_customer_id: customer.id }).eq('id', user.id);
-    // }
+    const customer = await stripe.customers.create({
+      email: user.email,
+      metadata: {
+        userId: user.id,
+      },
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -57,7 +48,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ sessionId: session.id });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err);
     return new NextResponse('Error creating checkout session', { status: 500 });
   }

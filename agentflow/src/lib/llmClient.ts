@@ -7,6 +7,9 @@
 // - NEXT_PUBLIC_GEMINI_API_KEY (used by geminiClient)
 
 import { callGemini } from "./geminiClient";
+// Optionally use Supabase client in browser to forward user ID for BYOK routing
+// This file is isomorphic; importing a JS module is fine in both environments.
+import { supabase } from "@/lib/supabaseClient";
 
 export type LLMProvider = "nvidia" | "gemini";
 
@@ -36,7 +39,7 @@ function cleanAssistantText(text: string): string {
 
 export interface LLMResult {
   provider: LLMProvider;
-  raw: any;
+  raw: unknown;
   text: string;
   reasoning?: string | null;
 }
@@ -50,7 +53,8 @@ function normalizeNvidiaBase(url?: string): string {
   return `${noTrail}/v1`;
 }
 const NVIDIA_BASE_URL = normalizeNvidiaBase(process.env.NEXT_PUBLIC_NVIDIA_BASE_URL);
-const NVIDIA_API_KEY = process.env.NEXT_PUBLIC_NVIDIA_API_KEY;
+// Use the default Weev-hosted API key
+const NVIDIA_API_KEY = process.env.NEXT_PUBLIC_NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
 const NVIDIA_DEFAULT_MODEL = process.env.NEXT_PUBLIC_NVIDIA_MODEL || "meta/llama-3.1-70b-instruct";
 
 function tryExtractJson(input: string): string | null {
@@ -110,6 +114,39 @@ export async function callLLM(prompt: string, opts: CallLLMOptions = {}): Promis
       "Accept": "application/json",
       ...(isBrowser ? {} : { Authorization: `Bearer ${NVIDIA_API_KEY}` }),
     };
+
+    // In browser, attach x-user-id so /api/llm/nvidia can switch to BYOK
+    if (isBrowser) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const userId = data?.session?.user?.id;
+        if (userId) {
+          headers["x-user-id"] = userId;
+        } else {
+          // Fallback to developer login stored in localStorage
+          try {
+            const raw = localStorage.getItem('dev_user');
+            if (raw) {
+              const dev = JSON.parse(raw);
+              if (dev?.id) headers["x-user-id"] = String(dev.id);
+            }
+          } catch {}
+        }
+        // If in dev/demo mode, also forward BYOK key from mock store when provider is BYOK
+        try {
+          const mp = localStorage.getItem('mock_profiles');
+          if (mp) {
+            const map = JSON.parse(mp) as Record<string, { api_key?: string; llm_provider?: string }>;
+            const uid = headers["x-user-id"];
+            if (uid && map[uid]?.llm_provider === 'byok' && map[uid]?.api_key) {
+              headers['x-byok-api-key'] = String(map[uid].api_key);
+            }
+          }
+        } catch {}
+      } catch {
+        // No session; continue without user header
+      }
+    }
 
     const doRequest = async (modelName: string) => {
       const resp = await fetch(url, {

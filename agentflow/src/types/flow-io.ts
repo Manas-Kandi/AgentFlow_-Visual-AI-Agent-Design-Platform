@@ -10,7 +10,7 @@ export type FlowMode = "NewMode" | "LegacyMode";
 // An entry in the transitive, namespaced flow context bag
 export interface FlowContextEntry {
   // Sanitized, size-limited snapshot of the node's config (node.data)
-  config: any;
+  config: Record<string, unknown>;
   // Last output of this node if available
   output?: NodeOutput;
   // Small metadata to help consumers (kept tiny)
@@ -32,7 +32,7 @@ export interface NodeContextV2 {
   // Inputs addressed by this node's input port names
   inputs: Record<string, NodeOutput>;
   // The current node's own configuration (thisNode.data)
-  config: any;
+  config: Record<string, unknown>;
   // Transitive, namespaced context of all upstream nodes
   flowContext: FlowContextBag;
   // Dual-mode flag (default: "NewMode")
@@ -65,7 +65,7 @@ export interface MinimalNodeDescriptor {
   id: string;
   type?: string;
   subtype?: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 // Public helper type for snapshotting nodes into flowContext

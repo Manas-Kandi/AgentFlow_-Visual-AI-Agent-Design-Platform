@@ -9,21 +9,21 @@ export async function callGemini(prompt: string, params: Record<string, unknown>
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   // Use passed-in contents array if provided
-  const contents = (params as any).contents || [{ role: 'user', parts: [{ text: prompt }] }];
+  const contents = (params as Record<string, unknown>).contents || [{ role: 'user', parts: [{ text: prompt }] }];
 
   // Map config fields into generationConfig (per Gemini spec); omit candidateCount
-  const generationConfig: any = {};
-  if (typeof (params as any).temperature === 'number') generationConfig.temperature = (params as any).temperature;
-  if (typeof (params as any).topK === 'number') generationConfig.topK = (params as any).topK;
-  if (typeof (params as any).topP === 'number') generationConfig.topP = (params as any).topP;
-  if (Array.isArray((params as any).stopSequences)) generationConfig.stopSequences = (params as any).stopSequences;
-  if (typeof (params as any).maxOutputTokens === 'number') generationConfig.maxOutputTokens = (params as any).maxOutputTokens;
+  const generationConfig: Record<string, unknown> = {};
+  if (typeof (params as Record<string, unknown>).temperature === 'number') generationConfig.temperature = (params as Record<string, unknown>).temperature;
+  if (typeof (params as Record<string, unknown>).topK === 'number') generationConfig.topK = (params as Record<string, unknown>).topK;
+  if (typeof (params as Record<string, unknown>).topP === 'number') generationConfig.topP = (params as Record<string, unknown>).topP;
+  if (Array.isArray((params as Record<string, unknown>).stopSequences)) generationConfig.stopSequences = (params as Record<string, unknown>).stopSequences;
+  if (typeof (params as Record<string, unknown>).maxOutputTokens === 'number') generationConfig.maxOutputTokens = (params as Record<string, unknown>).maxOutputTokens;
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     contents,
   };
   if (Object.keys(generationConfig).length) body.generationConfig = generationConfig;
-  if ((params as any).safetySettings) body.safetySettings = (params as any).safetySettings;
+  if ((params as Record<string, unknown>).safetySettings) body.safetySettings = (params as Record<string, unknown>).safetySettings;
 
   // DEBUG: Log the outgoing Gemini request body
   if (typeof window !== "undefined" && window?.localStorage) {

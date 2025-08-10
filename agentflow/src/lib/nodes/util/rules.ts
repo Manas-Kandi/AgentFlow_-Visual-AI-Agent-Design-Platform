@@ -3,14 +3,14 @@ export type AnyNodeData = Record<string, unknown> | undefined | null;
 export function getRuleText(data: AnyNodeData): string {
   const d = (data && typeof data === 'object') ? (data as Record<string, unknown>) : {};
   const rules = d.rules as Record<string, unknown> | undefined;
-  const nl = rules && typeof rules === 'object' ? (rules as any).nl : undefined;
+  const nl = rules && typeof rules === 'object' ? (rules as Record<string, unknown>).nl : undefined;
   return typeof nl === 'string' ? nl : '';
 }
 
 export function getRuleCompiled<T = Record<string, unknown>>(data: AnyNodeData): T | undefined {
   const d = (data && typeof data === 'object') ? (data as Record<string, unknown>) : {};
   const rules = d.rules as Record<string, unknown> | undefined;
-  const compiled = rules && typeof rules === 'object' ? (rules as any).compiled : undefined;
+  const compiled = rules && typeof rules === 'object' ? (rules as Record<string, unknown>).compiled : undefined;
   return (compiled && typeof compiled === 'object') ? (compiled as T) : undefined;
 }
 

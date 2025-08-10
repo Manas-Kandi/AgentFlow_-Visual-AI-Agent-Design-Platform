@@ -326,8 +326,8 @@ export class FlowEngine {
         const upstreamOutput = this.nodeOutputs[conn.sourceNode];
         // Skip if input not yet available (defensive)
         if (typeof upstreamOutput === "undefined") continue;
-        const controls = (conn as any).contextControls as
-          | { weight?: number; blocked?: boolean; control?: any }
+        const controls = conn.contextControls as
+          | { weight?: number; blocked?: boolean; control?: unknown }
           | undefined;
         if (controls?.blocked) continue; // blocked edge → exclude entirely
         const { output: transformed } = applyContextControlsToOutput(
@@ -339,14 +339,14 @@ export class FlowEngine {
 
       // Build transitive, namespaced flowContext (respect blocked edges)
       const upstreamIds = this.getUpstreamNodeIds(node.id, connections);
-      const flowContext: Record<string, ReturnType<typeof snapshotNodeForFlowContext>> = {} as any;
+      const flowContext: Record<string, SnapshotNodeForFlowContext> = {};
       for (const uid of upstreamIds) {
         const upNode = this.nodes.find((n) => n.id === uid);
         if (!upNode) continue;
         const upOut = this.nodeOutputs[uid];
         // If there's a direct edge from uid → node.id, capture advisory weight
         const direct = incoming.find((c) => c.sourceNode === uid);
-        const weight = (direct as any)?.contextControls?.weight as number | undefined;
+        const weight = direct?.contextControls?.weight as number | undefined;
         flowContext[uid] = snapshotNodeForFlowContext({
           node: { id: upNode.id, type: upNode.type, subtype: upNode.subtype, data: upNode.data },
           output: upOut,
@@ -369,7 +369,7 @@ export class FlowEngine {
           nodeSubtype: node.subtype,
           cause,
           topoIndex: visitIndex,
-          flowContextBefore: flowContext as any,
+          flowContextBefore: flowContext,
         };
         emitTester(startEvt);
       }
@@ -413,7 +413,7 @@ export class FlowEngine {
       const nodeEndAt = Date.now();
       const durationMs = nodeEndAt - nodeStartAt;
       const status =
-        typeof output === "object" && output !== null && "error" in (output as any)
+        typeof output === "object" && output !== null && "error" in output
           ? ("error" as const)
           : ("success" as const);
 
@@ -425,7 +425,7 @@ export class FlowEngine {
           output,
         }),
       };
-      const fcDiff = diffFlowContext(flowContext as any, flowContextAfter as any);
+      const fcDiff = diffFlowContext(flowContext, flowContextAfter);
 
       // Generate a compact human-readable summary
       const summary = this.generateSummary(node, output);
@@ -499,8 +499,8 @@ export class FlowEngine {
           output,
           summary,
           error: errorMsg,
-          flowContextBefore: flowContext as any,
-          flowContextAfter: flowContextAfter as any,
+          flowContextBefore: flowContext,
+          flowContextAfter: flowContextAfter,
           flowContextDiff: fcDiff,
           forwardedConnectionIds,
           forwardedTargetNodeIds,
@@ -545,7 +545,7 @@ export class FlowEngine {
       visited.add(current);
       const incoming = connections.filter((c) => c.targetNode === current);
       for (const conn of incoming) {
-        const controls = (conn as any).contextControls as
+        const controls = conn.contextControls as
           | { blocked?: boolean }
           | undefined;
         if (controls?.blocked) continue; // do not traverse blocked edges
@@ -575,20 +575,20 @@ export class FlowEngine {
       return truncate(output.trim());
     }
     if (output && typeof output === "object" && "error" in output) {
-      const msg = (output as any).error as string;
+      const msg = (output as Record<string, unknown>).error as string;
       return `Error: ${truncate(String(msg || "Unknown error"))}`;
     }
     if (type === "if-else") {
       // IfElse node typically returns "true" | "false" | { output: string }
       let v = "";
-      if (typeof (output as any)?.output === "string") v = (output as any).output;
+      if (typeof (output as Record<string, unknown>)?.output === "string") v = (output as Record<string, unknown>).output as string;
       else if (typeof output === "string") v = output;
       else v = asJSON(output);
       return `If/Else → ${v}`;
     }
     if (type === "decision-tree") {
       let v = "";
-      if (typeof (output as any)?.output === "string") v = (output as any).output;
+      if (typeof (output as Record<string, unknown>)?.output === "string") v = (output as Record<string, unknown>).output as string;
       else if (typeof output === "string") v = output;
       else v = asJSON(output);
       return `Branch → ${v}`;

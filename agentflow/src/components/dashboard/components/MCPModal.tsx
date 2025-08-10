@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Copy, Power, PowerOff } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export default function MCPModal({ isOpen, onClose, projectName, projectId, onSe
       const isJson = ct.includes('application/json');
       const payload = isJson ? await response.json().catch(() => ({})) : await response.text();
       if (response.ok) {
-        const data: any = isJson ? payload : {};
+        const data: { port?: number } = isJson ? payload : {};
         if (typeof data?.port !== 'number') {
           throw new Error('Start server succeeded but no port was returned');
         }
@@ -42,7 +42,7 @@ export default function MCPModal({ isOpen, onClose, projectName, projectId, onSe
         onServerStatusChange(projectId, true);
         setLogs([`Server started successfully on port ${data.port}.`, 'Waiting for client connection...']);
       } else {
-        const msg = isJson ? (payload as any)?.message : String(payload);
+        const msg = isJson ? (payload as { message?: string })?.message : String(payload);
         throw new Error(msg || `Failed to start server (HTTP ${response.status})`);
       }
     } catch (error) {

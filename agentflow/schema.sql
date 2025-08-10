@@ -33,6 +33,16 @@ create table connections (
   created_at timestamp with time zone default now()
 );
 
+-- Table to store user profiles and preferences
+create table user_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text unique not null,
+  api_key text, -- Encrypted API key for BYOK
+  llm_provider text check (llm_provider in ('weev', 'byok')) default 'weev',
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
 -- Row Level Security (RLS)
 -- No RLS policies are defined in this project. Add policies here if your
 -- application requires user-based access control.

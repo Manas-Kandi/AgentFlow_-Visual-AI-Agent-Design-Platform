@@ -12,7 +12,7 @@ export interface NodeContext {
   // Inputs addressed by the target node's input port names
   inputs?: Record<string, NodeOutput>;
   // The target node's own configuration
-  config?: any;
+  config?: Record<string, unknown>;
   // Transitive, namespaced context of upstream nodes
   flowContext?: FlowContextBag;
   // Dual-mode flag for migration (default: NewMode)
@@ -46,11 +46,11 @@ export abstract class BaseNode implements NodeExecutor {
       const toText = (val: NodeOutput): string => {
         if (typeof val === "string") return val;
         if (val && typeof val === "object") {
-          if (typeof (val as any).output === "string") return (val as any).output;
-          if (typeof (val as any).message === "string") return (val as any).message;
+          if (typeof (val as Record<string, unknown>).output === "string") return (val as Record<string, unknown>).output as string;
+          if (typeof (val as Record<string, unknown>).message === "string") return (val as Record<string, unknown>).message as string;
           // Unified LLM wrapper
-          if ("llm" in (val as any) && (val as any).llm) {
-            const raw: any = (val as any).llm;
+          if ("llm" in (val as Record<string, unknown>) && (val as Record<string, unknown>).llm) {
+            const raw: unknown = (val as Record<string, unknown>).llm;
             // NVIDIA (OpenAI-compatible) shape
             const nvidiaText: string | undefined = raw?.choices?.[0]?.message?.content;
             if (typeof nvidiaText === "string") return nvidiaText;
@@ -58,8 +58,8 @@ export abstract class BaseNode implements NodeExecutor {
             const gemText: string | undefined = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (typeof gemText === "string") return gemText;
           }
-          if ("gemini" in (val as any) && (val as any).gemini) {
-            const g: any = (val as any).gemini;
+          if ("gemini" in (val as Record<string, unknown>) && (val as Record<string, unknown>).gemini) {
+            const g: unknown = (val as Record<string, unknown>).gemini;
             const t = g?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (typeof t === "string") return t;
           }
@@ -84,10 +84,10 @@ export abstract class BaseNode implements NodeExecutor {
         if (upstreamNode && (upstreamNode.type === "ui" || upstreamNode.subtype === "ui")) {
           const output = context.nodeOutputs[conn.sourceNode];
           if (typeof output === "string" && output) return output;
-          if (output && typeof output === "object" && (output as any).message)
-            return (output as any).message as string;
-          if (output && typeof output === "object" && (output as any).content)
-            return (output as any).content as string;
+          if (output && typeof output === "object" && (output as Record<string, unknown>).message)
+            return (output as Record<string, unknown>).message as string;
+          if (output && typeof output === "object" && (output as Record<string, unknown>).content)
+            return (output as Record<string, unknown>).content as string;
           type UIData = { content?: string; message?: string };
           const data = upstreamNode.data as UIData;
           return data?.content || data?.message || "";
@@ -95,21 +95,21 @@ export abstract class BaseNode implements NodeExecutor {
         const output = context.nodeOutputs[conn.sourceNode];
         if (typeof output === "string") return output;
         if (output && typeof output === "object") {
-          if (typeof (output as any).output === "string") return (output as any).output as string;
-          if ("llm" in (output as any) && (output as any).llm) {
-            const raw: any = (output as any).llm;
+          if (typeof (output as Record<string, unknown>).output === "string") return (output as Record<string, unknown>).output as string;
+          if ("llm" in (output as Record<string, unknown>) && (output as Record<string, unknown>).llm) {
+            const raw: unknown = (output as Record<string, unknown>).llm;
             const nvidiaText: string | undefined = raw?.choices?.[0]?.message?.content;
             if (typeof nvidiaText === "string") return nvidiaText;
             const gemText: string | undefined = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (typeof gemText === "string") return gemText;
           }
-          if ("gemini" in (output as any)) {
-            const geminiOutput = (output as any).gemini as any;
+          if ("gemini" in (output as Record<string, unknown>)) {
+            const geminiOutput = (output as Record<string, unknown>).gemini as unknown;
             const text = geminiOutput?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (typeof text === "string") return text;
           }
-          if ("provider" in (output as any) && (output as any).provider) {
-            const provider: any = (output as any).provider;
+          if ("provider" in (output as Record<string, unknown>) && (output as Record<string, unknown>).provider) {
+            const provider: unknown = (output as Record<string, unknown>).provider;
             const text = provider?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (typeof text === "string") return text;
           }
