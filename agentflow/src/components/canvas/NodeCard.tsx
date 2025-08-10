@@ -1,6 +1,6 @@
 import React from "react";
 import { CanvasNode } from "@/types";
-import "./canvas.css";
+import "./Canvas.css";
 
 export interface NodeVM {
   id: string;
@@ -16,8 +16,12 @@ interface NodeCardProps {
 }
 
 export default function NodeCard({ node, vm }: NodeCardProps) {
-  const title = vm?.title ?? (typeof node.data === "object" && node.data && "title" in node.data ? (node.data as any).title : node.subtype || node.type);
-  const color = vm?.color ?? (typeof node.data === "object" && node.data && "color" in node.data ? (node.data as any).color : undefined);
+  const data =
+    typeof node.data === "object" && node.data
+      ? (node.data as Record<string, unknown>)
+      : {};
+  const title = vm?.title ?? (typeof data.title === "string" ? data.title : node.subtype || node.type);
+  const color = vm?.color ?? (typeof data.color === "string" ? data.color : undefined);
 
   return (
     <div className="af-card" role="group" aria-label={`Node ${title}`} style={{ borderColor: color }}>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Schema } from "./schemas";
-import "../canvas.css";
+import "../Canvas.css";
 
 export function Fieldset({ schema, value, onChange }: { schema: Schema; value: Record<string, any>; onChange: (v: Record<string, any>) => void; }) {
   return (
