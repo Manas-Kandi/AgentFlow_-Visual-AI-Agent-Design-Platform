@@ -1,29 +1,52 @@
-import React, { useState } from "react";
+import React from "react";
 import "./canvas.css";
 
 interface TesterDockProps {
-  open?: boolean;
-  onToggle?: () => void;
-  events?: any[];
+  isOpen: boolean;
+  onToggle: () => void;
+  startNodeId: string | null;
+  onStartNodeChange: (id: string | null) => void;
+  nodeStatuses?: Record<string, "running" | "success" | "error">;
+  pulsingConnectionIds?: string[];
+  onTestFlow?: () => void;
+  isTesting?: boolean;
 }
 
-export default function TesterDock({ open = false, onToggle, events = [] }: TesterDockProps) {
-  const [tab, setTab] = useState<"Summary" | "Output" | "Prompt" | "LLM" | "Inputs" | "Trace" | "Errors">("Summary");
+export default function TesterDock({
+  isOpen,
+  onToggle,
+  startNodeId,
+  onStartNodeChange,
+  nodeStatuses,
+  pulsingConnectionIds,
+  onTestFlow,
+  isTesting,
+}: TesterDockProps) {
   return (
-    <section className={`af-dock ${open ? "is-open" : ""}`} aria-expanded={open}>
+    <section className={`af-dock ${isOpen ? "is-open" : ""}`} aria-expanded={isOpen}>
       <div className="af-dock-header">
-        <div className="af-tabs">
-          {["Summary", "Output", "Prompt", "LLM", "Inputs", "Trace", "Errors"].map((t) => (
-            <button key={t} className={`af-tab ${tab === t ? "is-active" : ""}`} onClick={() => setTab(t as any)}>
-              {t}
+        <span>Tester</span>
+        <button className="af-btn" onClick={onToggle}>
+          {isOpen ? "Close" : "Open"}
+        </button>
+      </div>
+      {isOpen && (
+        <div className="af-dock-body">
+          <div className="mb-2 flex items-center gap-2">
+            <button
+              className="af-btn af-primary"
+              onClick={onTestFlow}
+              disabled={isTesting}
+            >
+              {isTesting ? "Running..." : "Run"}
             </button>
-          ))}
+            <span className="text-xs text-gray-400">Start: {startNodeId || "None"}</span>
+          </div>
+          <pre className="af-code text-xs overflow-auto">
+            {JSON.stringify({ nodeStatuses, pulsingConnectionIds }, null, 2)}
+          </pre>
         </div>
-        <button className="af-btn" onClick={onToggle}>{open ? "Close" : "Open"}</button>
-      </div>
-      <div className="af-dock-body" role="tabpanel" aria-label={`${tab} panel`}>
-        <pre className="af-code">{JSON.stringify({ tab, events }, null, 2)}</pre>
-      </div>
+      )}
     </section>
   );
 }
