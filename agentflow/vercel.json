@@ -1,16 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "build": {
-    "env": {
-      "GIT_SUBMODULE_STRATEGY": "none"
+    "build": {
+      "env": {
+        "GIT_SUBMODULE_STRATEGY": "none"
+      }
     }
   }
-}
